@@ -767,12 +767,110 @@
     }
 
     /* Sync badge */
-    .sync-badge {
+    /* Date filter bar */
+  .date-filter-bar {
+    padding: 10px 20px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    background: rgba(0,0,0,0.1);
+  }
+
+  .date-filter-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .date-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 6px 10px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 130px;
+  }
+
+  .date-input:focus { border-color: var(--accent); }
+  .date-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.6);
+    cursor: pointer;
+  }
+
+  /* Keterangan field */
+  #keteranganField {
+    flex-direction: column;
+  }
+
+  @media (max-width: 600px) {
+    .date-filter-bar { padding: 8px 14px 10px; gap: 7px; }
+    .date-input { width: 120px; font-size: 10px; padding: 5px 8px; }
+    .date-filter-label { font-size: 9px; width: 100%; }
+  }
+
+  .sync-badge {
       top: 10px;
       right: 10px;
       font-size: 8px;
       padding: 4px 10px;
     }
+  }
+
+  /* Date filter bar */
+  .date-filter-bar {
+    padding: 10px 20px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    background: rgba(0,0,0,0.1);
+  }
+
+  .date-filter-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .date-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 6px 10px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 130px;
+  }
+
+  .date-input:focus { border-color: var(--accent); }
+  .date-input::-webkit-calendar-picker-indicator {
+    filter: invert(0.6);
+    cursor: pointer;
+  }
+
+  /* Keterangan field */
+  #keteranganField {
+    flex-direction: column;
+  }
+
+  @media (max-width: 600px) {
+    .date-filter-bar { padding: 8px 14px 10px; gap: 7px; }
+    .date-input { width: 120px; font-size: 10px; padding: 5px 8px; }
+    .date-filter-label { font-size: 9px; width: 100%; }
   }
 
   .sync-badge {
@@ -930,16 +1028,31 @@
           <div class="field">
             <label>Unit</label>
             <select id="itemUnit">
-              <option value="pcs">pcs</option>
-              <option value="kg">kg</option>
-              <option value="g">g</option>
-              <option value="L">L</option>
-              <option value="ml">ml</option>
-              <option value="box">box</option>
-              <option value="pack">pack</option>
-              <option value="bottle">bottle</option>
+              <option value="Bottle 250ml">Bottle 250ml</option>
+              <option value="Bottle 500ml">Bottle 500ml</option>
+              <option value="Bottle 1L">Bottle 1L</option>
             </select>
           </div>
+        </div>
+
+        <div class="field" id="keteranganField" style="display:none">
+          <label>Keterangan *</label>
+          <select id="itemKeterangan">
+            <option value="">— Select Keterangan —</option>
+            <option value="Sales">Sales</option>
+            <option value="Sample">Sample</option>
+            <option value="Reject">Reject</option>
+          </select>
+        </div>
+
+        <div class="field" id="keteranganField" style="display:none">
+          <label>Keterangan *</label>
+          <select id="itemKeterangan">
+            <option value="">— Select Keterangan —</option>
+            <option value="Sales">Sales</option>
+            <option value="Sample">Sample</option>
+            <option value="Reject">Reject</option>
+          </select>
         </div>
 
         <div class="field">
@@ -954,51 +1067,7 @@
     <!-- RIGHT -->
     <div class="right-panel">
 
-      <!-- TRANSACTION LOG -->
-      <div class="table-panel">
-        <div class="table-toolbar">
-          <div class="panel-icon">📋</div>
-          <div class="panel-title">Transaction Log</div>
-          <input class="search-box" id="searchBox" placeholder="Search items..." oninput="renderTable()"/>
-          <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
-          <button class="filter-btn" onclick="setFilter('in', this)">In</button>
-          <button class="filter-btn" onclick="setFilter('out', this)">Out</button>
-        </div>
-        <div id="tableWrap" style="overflow-x:auto;max-height:340px;overflow-y:auto;">
-          <table>
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Type</th>
-                <th>Qty</th>
-                <th>Unit</th>
-                <th>Notes</th>
-                <th>Time</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="transactionBody"></tbody>
-          </table>
-          <div class="empty-state" id="emptyLog">
-            <div class="empty-icon">📭</div>
-            NO TRANSACTIONS YET<br>Record your first item above
-          </div>
-        </div>
-      </div>
-
-      <!-- STOCK LEVELS -->
-      <div class="stock-panel">
-        <div class="panel-header">
-          <div class="panel-icon">📊</div>
-          <div class="panel-title">Current Stock Levels</div>
-        </div>
-        <div id="stockLevels">
-          <div class="empty-state">
-            <div class="empty-icon">🗃️</div>
-            NO STOCK DATA YET
-          </div>
-        </div>
-      </div>
+<!-- Stock levels moved to top -->
 
     </div>
   </div>
@@ -1049,12 +1118,15 @@
     document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
     document.querySelector(`.type-btn.${type}`).classList.add('active');
     const btn = document.getElementById('submitBtn');
+    const ketField = document.getElementById('keteranganField');
     if (type === 'in') {
       btn.textContent = '+ Record Stock In';
       btn.classList.remove('out-mode');
+      ketField.style.display = 'none';
     } else {
       btn.textContent = '− Record Stock Out';
       btn.classList.add('out-mode');
+      ketField.style.display = 'flex';
     }
   }
 
@@ -1087,12 +1159,19 @@
       }
     }
 
+    const keterangan = document.getElementById('itemKeterangan').value;
+    if (currentType === 'out' && !keterangan) {
+      showToast('Please select Keterangan', true);
+      return;
+    }
+
     const tx = {
       name,
       category: cat || 'Uncategorized',
       qty,
       unit,
       type: currentType,
+      keterangan: currentType === 'out' ? keterangan : '',
       notes,
       time: new Date().toISOString()
     };
@@ -1114,6 +1193,7 @@
     updateItemOptions();
     document.getElementById('itemQty').value = '';
     document.getElementById('itemNotes').value = '';
+    document.getElementById('itemKeterangan').value = '';
   }
 
   // GET STOCK LEVELS
@@ -1165,11 +1245,21 @@
   function renderTable() {
     const body = document.getElementById('transactionBody');
     const search = document.getElementById('searchBox').value.toLowerCase();
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
     const empty = document.getElementById('emptyLog');
 
     let filtered = transactions.filter(tx => {
       if (currentFilter !== 'all' && tx.type !== currentFilter) return false;
       if (search && !tx.name.toLowerCase().includes(search) && !tx.category.toLowerCase().includes(search)) return false;
+      if (dateFrom) {
+        const txDate = tx.time.split('T')[0];
+        if (txDate < dateFrom) return false;
+      }
+      if (dateTo) {
+        const txDate = tx.time.split('T')[0];
+        if (txDate > dateTo) return false;
+      }
       return true;
     });
 
@@ -1189,11 +1279,18 @@
         <td><span class="badge ${tx.type}">${tx.type === 'in' ? '▲ IN' : '▼ OUT'}</span></td>
         <td class="qty-cell ${tx.type}">${tx.type === 'in' ? '+' : '-'}${tx.qty}</td>
         <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)">${escHtml(tx.unit)}</td>
-        <td style="color:var(--muted);font-size:12px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(tx.notes || '—')}</td>
+        <td style="font-size:11px;color:var(--muted)">${tx.keterangan ? `<span style="background:rgba(255,107,53,0.12);color:var(--out-color);border:1px solid rgba(255,107,53,0.2);padding:2px 7px;border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:9px">${escHtml(tx.keterangan)}</span>` : '—'}</td>
+        <td style="color:var(--muted);font-size:11px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(tx.notes || '—')}</td>
         <td class="time-cell">${formatTime(tx.time)}</td>
         <td><button class="del-btn" onclick="deleteTransaction('${tx._firebaseId}')">✕</button></td>
       </tr>
     `).join('');
+  }
+
+  function clearDateFilter() {
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    renderTable();
   }
 
   // RENDER STOCK LEVELS
@@ -1273,6 +1370,13 @@
     toastTimer = setTimeout(() => el.className = '', 3000);
   }
 
+  // CLEAR DATE FILTER
+  function clearDateFilter() {
+    document.getElementById('dateFrom').value = '';
+    document.getElementById('dateTo').value = '';
+    renderTable();
+  }
+
   // SYNC BADGE
   let syncTimer;
   function showSyncBadge() {
@@ -1286,4 +1390,64 @@
   renderAll();
 </script>
 </body>
-</html>
+</html
+
+      <!-- CURRENT STOCK LEVELS (moved to top) -->
+      <div class="stock-panel" id="stockPanelTop">
+        <div class="panel-header">
+          <div class="panel-icon">📊</div>
+          <div class="panel-title">Current Stock Levels</div>
+        </div>
+        <div id="stockLevels">
+          <div class="empty-state">
+            <div class="empty-icon">🗃️</div>
+            NO STOCK DATA YET
+          </div>
+        </div>
+      </div>
+
+      <!-- TRANSACTION LOG -->
+      <div class="table-panel">
+        <div class="table-toolbar">
+          <div style="display:flex;align-items:center;gap:10px;width:100%">
+            <div class="panel-icon">📋</div>
+            <div class="panel-title">Transaction Log</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;width:100%;flex-wrap:wrap">
+            <input class="search-box" id="searchBox" placeholder="Search items..." oninput="renderTable()" style="flex:1;min-width:120px"/>
+            <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+            <button class="filter-btn" onclick="setFilter('in', this)">In</button>
+            <button class="filter-btn" onclick="setFilter('out', this)">Out</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;width:100%;flex-wrap:wrap">
+            <label style="color:var(--muted);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap">Date Range:</label>
+            <input type="date" id="dateFrom" class="search-box" style="width:auto;flex:1" onchange="renderTable()"/>
+            <span style="color:var(--muted);font-size:11px">to</span>
+            <input type="date" id="dateTo" class="search-box" style="width:auto;flex:1" onchange="renderTable()"/>
+            <button class="filter-btn" onclick="clearDateFilter()" style="white-space:nowrap">✕ Clear</button>
+          </div>
+        </div>
+        <div id="tableWrap" style="overflow-x:auto;max-height:340px;overflow-y:auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Type</th>
+                <th>Qty</th>
+                <th>Unit</th>
+                <th>Keterangan</th>
+                <th>Notes</th>
+                <th>Time</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="transactionBody"></tbody>
+          </table>
+          <div class="empty-state" id="emptyLog">
+            <div class="empty-icon">📭</div>
+            NO TRANSACTIONS YET<br>Record your first item above
+          </div>
+        </div>
+      </div>
+
+>
