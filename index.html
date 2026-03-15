@@ -492,33 +492,57 @@
     overflow: hidden;
   }
 
-  .stock-item {
+  /* Stock item group */
+  .stock-item-group {
+    border-bottom: 1px solid var(--border);
+  }
+  .stock-item-group:last-child { border-bottom: none; }
+
+  .stock-group-header {
     display: flex;
     align-items: center;
-    padding: 14px 20px;
-    border-bottom: 1px solid var(--border);
-    gap: 14px;
-    transition: background 0.15s;
+    justify-content: space-between;
+    padding: 12px 20px 6px;
+    background: rgba(0,0,0,0.15);
   }
 
-  .stock-item:last-child { border-bottom: none; }
-  .stock-item:hover { background: rgba(255,255,255,0.02); }
-
   .stock-item-name {
-    flex: 1;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 13px;
+    color: var(--text);
   }
 
   .stock-item-cat {
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     color: var(--muted);
+    margin-top: 1px;
+  }
+
+  .stock-size-rows {
+    padding: 4px 20px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .stock-size-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .stock-size-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    min-width: 95px;
+    letter-spacing: 0.5px;
   }
 
   .stock-bar-wrap {
-    flex: 2;
-    height: 6px;
+    flex: 1;
+    height: 5px;
     background: rgba(255,255,255,0.07);
     border-radius: 10px;
     overflow: hidden;
@@ -532,10 +556,26 @@
 
   .stock-qty {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
-    min-width: 60px;
+    min-width: 44px;
     text-align: right;
+  }
+
+  /* Legacy .stock-item for any remaining usage */
+  .stock-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    gap: 14px;
+  }
+
+  @media (max-width: 600px) {
+    .stock-group-header { padding: 10px 14px 5px; }
+    .stock-size-rows { padding: 4px 14px 10px; gap: 6px; }
+    .stock-size-label { min-width: 80px; font-size: 9px; }
+    .stock-item-name { font-size: 12px; }
   }
 
   .empty-state {
@@ -1196,7 +1236,7 @@
     document.getElementById('itemKeterangan').value = '';
   }
 
-  // GET STOCK LEVELS
+  // GET STOCK LEVELS (total per item, for validation)
   function getStock() {
     const stock = {};
     transactions.forEach(tx => {
@@ -1205,6 +1245,13 @@
       else stock[tx.name] -= tx.qty;
     });
     return stock;
+  }
+
+  // GET STOCK BY UNIT (for per-unit validation)
+  function getStockByUnit(name, unit) {
+    return transactions
+      .filter(tx => tx.name === name && tx.unit === unit)
+      .reduce((s, tx) => tx.type === 'in' ? s + tx.qty : s - tx.qty, 0);
   }
 
   // GET ITEM META
@@ -1293,41 +1340,77 @@
     renderTable();
   }
 
-  // RENDER STOCK LEVELS
+  // RENDER STOCK LEVELS - broken down by bottle size
   function renderStockLevels() {
-    const stock = getStock();
-    const meta = getItemMeta();
     const container = document.getElementById('stockLevels');
-    const items = Object.entries(stock).sort((a,b) => b[1]-a[1]);
+    const BOTTLE_SIZES = ['Bottle 250ml', 'Bottle 500ml', 'Bottle 1L'];
+    const ALL_ITEMS = [
+      'Kopi Susu Gula Aren', 'Hazelnut Latte', 'Vanila Latte', 'Salted Caramel Latte',
+      'Matcha', 'Taro', 'Chocolate'
+    ];
 
-    if (items.length === 0) {
+    // Build stock map: { itemName: { unit: qty } }
+    const stockMap = {};
+    transactions.forEach(tx => {
+      if (!stockMap[tx.name]) stockMap[tx.name] = {};
+      if (!stockMap[tx.name][tx.unit]) stockMap[tx.name][tx.unit] = 0;
+      if (tx.type === 'in') stockMap[tx.name][tx.unit] += tx.qty;
+      else stockMap[tx.name][tx.unit] -= tx.qty;
+    });
+
+    // Only show items that have at least one transaction
+    const activeItems = ALL_ITEMS.filter(item => stockMap[item]);
+
+    if (activeItems.length === 0) {
       container.innerHTML = '<div class="empty-state"><div class="empty-icon">🗃️</div>NO STOCK DATA YET</div>';
       return;
     }
 
-    const max = Math.max(...items.map(([,v]) => v), 1);
-    container.innerHTML = items.map(([name, qty]) => {
-      const pct = Math.max(0, (qty / max) * 100);
-      const low = qty <= 10;
-      const barColor = qty <= 0 ? 'var(--danger)' : low ? 'var(--warn)' : qty > max * 0.6 ? 'var(--accent)' : 'var(--out-color)';
-      const qtyColor = qty <= 0 ? 'var(--danger)' : low ? 'var(--warn)' : 'var(--text)';
-      const m = meta[name] || {};
+    // Get max qty across all item+unit combos for bar scaling
+    let maxQty = 1;
+    activeItems.forEach(item => {
+      BOTTLE_SIZES.forEach(size => {
+        const q = stockMap[item]?.[size] || 0;
+        if (q > maxQty) maxQty = q;
+      });
+    });
+
+    container.innerHTML = activeItems.map(item => {
+      const sizes = BOTTLE_SIZES.filter(s => stockMap[item]?.[s] !== undefined);
+      const rows = BOTTLE_SIZES.map(size => {
+        const qty = stockMap[item]?.[size] ?? null;
+        if (qty === null) return ''; // never recorded this size
+        const pct = Math.max(0, (qty / maxQty) * 100);
+        const low = qty <= 10 && qty > 0;
+        const barColor = qty <= 0 ? 'var(--danger)' : low ? 'var(--warn)' : qty > maxQty * 0.6 ? 'var(--accent)' : 'var(--out-color)';
+        const qtyColor = qty <= 0 ? 'var(--danger)' : low ? 'var(--warn)' : 'var(--text)';
+        return `
+          <div class="stock-size-row">
+            <div class="stock-size-label">${escHtml(size)}</div>
+            <div class="stock-bar-wrap">
+              <div class="stock-bar" style="width:${pct}%;background:${barColor}"></div>
+            </div>
+            <div class="stock-qty" style="color:${qtyColor};min-width:44px">
+              ${qty}
+              ${low ? '<span style="font-size:10px">⚠️</span>' : ''}
+              ${qty <= 0 ? '<span style="font-size:9px;color:var(--danger)">OUT</span>' : ''}
+            </div>
+          </div>`;
+      }).join('');
+
+      // Get category from transactions
+      const cat = transactions.find(t => t.name === item)?.category || '';
+
       return `
-        <div class="stock-item">
-          <div style="min-width:160px">
-            <div class="stock-item-name">${escHtml(name)}</div>
-            <div class="stock-item-cat">${escHtml(m.category||'Uncategorized')}</div>
+        <div class="stock-item-group">
+          <div class="stock-group-header">
+            <div>
+              <div class="stock-item-name">${escHtml(item)}</div>
+              <div class="stock-item-cat">${escHtml(cat)}</div>
+            </div>
           </div>
-          <div class="stock-bar-wrap">
-            <div class="stock-bar" style="width:${Math.max(pct,0)}%;background:${barColor}"></div>
-          </div>
-          <div class="stock-qty" style="color:${qtyColor}">
-            ${qty} <span style="font-size:10px;color:var(--muted)">${escHtml(m.unit||'pcs')}</span>
-            ${low && qty > 0 ? ' <span title="Low stock" style="font-size:11px">⚠️</span>' : ''}
-            ${qty <= 0 ? ' <span style="font-size:10px;color:var(--danger)">OUT</span>' : ''}
-          </div>
-        </div>
-      `;
+          <div class="stock-size-rows">${rows}</div>
+        </div>`;
     }).join('');
   }
 
