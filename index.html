@@ -1604,28 +1604,26 @@
   // ADD TRANSACTION
   async function addTransaction() {
     const name = document.getElementById('itemName').value;
-    const qty = parseInt(document.getElementById('itemQty').value);
+    const qty = parseInt(document.getElementById('itemQty').value) || 0;
     const cat = document.getElementById('itemCategory').value;
     const unit = document.getElementById('itemUnit').value;
     const notes = document.getElementById('itemNotes').value.trim();
 
-    if (!name) { showToast('Item name is required', true); return; }
-    if (!qty || qty < 1) { showToast('Enter a valid quantity', true); return; }
+    const keterangan = document.getElementById('itemKeterangan').value;
+    const qtyNum = parseInt(qty);
 
-    // Check if out would go negative
+    if (!name) { showToast('Item name is required', true); return; }
+    if (!qtyNum || qtyNum < 1) { showToast('Enter a valid quantity', true); return; }
+    if (currentType === 'out' && !keterangan) { showToast('Please select Keterangan', true); return; }
+
+    // Check stock per bottle size (unit)
     if (currentType === 'out') {
-      const stock = getStock();
-      const current = stock[name] || 0;
-      if (current < qty) {
-        showToast(`Insufficient stock! Only ${current} ${unit} available`, true);
+      const current = getStockByUnit(name, unit);
+      console.log('Stock check:', name, unit, 'current:', current, 'requested:', qtyNum);
+      if (current < qtyNum) {
+        showToast('⚠️ Only ' + current + ' ' + unit + ' of ' + name + ' available!', true);
         return;
       }
-    }
-
-    const keterangan = document.getElementById('itemKeterangan').value;
-    if (currentType === 'out' && !keterangan) {
-      showToast('Please select Keterangan', true);
-      return;
     }
 
     const tx = {
@@ -1674,7 +1672,7 @@
   function getStockByUnit(name, unit) {
     return transactions
       .filter(tx => tx.name === name && tx.unit === unit)
-      .reduce((s, tx) => tx.type === 'in' ? s + tx.qty : s - tx.qty, 0);
+      .reduce((s, tx) => tx.type === 'in' ? s + parseInt(tx.qty) : s - parseInt(tx.qty), 0);
   }
 
   // GET ITEM META
