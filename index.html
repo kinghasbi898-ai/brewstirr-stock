@@ -484,6 +484,9 @@ window.openModal = function(id) {
     +(tx.keterangan?'<div class="modal-row"><div class="modal-row-icon">&#128204;</div><div><div class="modal-row-label">Keterangan</div><div class="modal-row-value warn">'+esc(tx.keterangan)+'</div></div></div>':'')
     +(tx.notes?'<div class="modal-row"><div class="modal-row-icon">&#128221;</div><div><div class="modal-row-label">Notes</div><div class="modal-row-value" style="font-weight:400;font-size:13px">'+esc(tx.notes)+'</div></div></div>':'')
     +'<div class="modal-row"><div class="modal-row-icon">&#128336;</div><div><div class="modal-row-label">Time</div><div class="modal-row-value" style="font-family:monospace;font-size:12px">'+fmtFull(tx.time)+'</div></div></div>';
+  // Hide delete button for staff
+  var modalDelBtn = document.getElementById('modalDelBtn');
+  if(modalDelBtn) modalDelBtn.style.display = window._currentRole==='admin' ? 'flex' : 'none';
   document.getElementById('modalOverlay').classList.add('show');
   document.body.style.overflow='hidden';
 };
@@ -532,13 +535,10 @@ function renderTable(){
       +'<td style="font-family:monospace;font-size:11px;color:var(--muted)">'+esc(tx.unit)+'</td>'
       +'<td style="color:var(--muted);font-size:12px">'+esc(tx.notes||'-')+'</td>'
       +'<td class="time-cell">'+fmtTime(tx.time)+'</td>'
-      +'<td><button class="del-btn" onclick="event.stopPropagation();window.deleteTransaction(\''+tx._firebaseId+'\')">&#10005;</button></td>'
+      +(window._currentRole==='admin' ? '<td><button class="del-btn" onclick="event.stopPropagation();window.deleteTransaction(\''+tx._firebaseId+'\')">&#10005;</button></td>' : '<td></td>')
       +'</tr>';
   }).join('');
-  // Hide delete buttons for staff
-  if(window._currentRole==='staff'){
-    document.querySelectorAll('.del-btn').forEach(function(btn){btn.style.display='none';});
-  }
+
 }
 
 function renderStockLevels(){
@@ -626,17 +626,7 @@ auth.onAuthStateChanged(function(user){
     var ne=document.getElementById('userBarName');if(ne)ne.textContent=displayName;
     var re=document.getElementById('userBarRole');if(re){re.textContent=role.toUpperCase();re.className='user-bar-role '+role;}
     window._currentRole=role;
-    if(role==='staff'){
-      // Staff can see everything but hide delete buttons
-      setTimeout(function(){
-        document.querySelectorAll('.del-btn').forEach(function(btn){
-          btn.style.display='none';
-        });
-        // Also hide delete button inside modal
-        var modalDel=document.getElementById('modalDelBtn');
-        if(modalDel) modalDel.style.display='none';
-      },500);
-    }
+    // Staff role set - delete buttons handled inline in renderTable and openModal
     db.collection('transactions').orderBy('time','desc').onSnapshot(function(snap){
       transactions=[];
       snap.forEach(function(d){transactions.push(Object.assign({},d.data(),{_firebaseId:d.id}));});
