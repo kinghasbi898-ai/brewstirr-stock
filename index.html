@@ -169,7 +169,7 @@ tbody tr:hover td{background:rgba(0,229,160,0.04)!important}
       <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="staff@brewstirr.com" onkeydown="if(event.key==='Enter')doLogin()"/></div>
       <div class="field"><label>Password</label><input type="password" id="loginPassword" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" onkeydown="if(event.key==='Enter')doLogin()"/></div>
       <div class="login-error" id="loginError"></div>
-      <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+      <button class="login-btn" id="loginBtn" onclick="if(typeof doLogin==='function'){doLogin();}else{document.getElementById('loginError').textContent='JS Error: doLogin not found';document.getElementById('loginError').classList.add('show');}">Sign In</button>
     </div>
   </div>
 </div>
