@@ -1060,6 +1060,204 @@
     .modal-row-value { font-size: 13px; }
   }
 
+  /* LOGIN SCREEN */
+  .login-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 380px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+    animation: loginFadeIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  @keyframes loginFadeIn {
+    from { opacity: 0; transform: translateY(30px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .login-header {
+    padding: 32px 28px 24px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(160deg, rgba(0,229,160,0.05), transparent);
+  }
+
+  .login-logo {
+    width: 64px; height: 64px;
+    object-fit: contain;
+    filter: invert(1);
+    border-radius: 50%;
+    margin-bottom: 14px;
+  }
+
+  .login-brand {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .login-brand span { color: var(--accent); }
+
+  .login-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .login-body {
+    padding: 24px 28px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .login-btn {
+    padding: 13px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: #0d0f14;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    margin-top: 4px;
+  }
+
+  .login-btn:hover {
+    background: #00ffb2;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(0,229,160,0.3);
+  }
+
+  .login-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .login-error {
+    background: rgba(255,68,102,0.1);
+    border: 1px solid rgba(255,68,102,0.3);
+    color: var(--danger);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    display: none;
+  }
+
+  .login-error.show { display: block; }
+
+  /* TOP BAR USER INFO */
+  .user-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    background: var(--surface2);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  .user-bar-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+    letter-spacing: 0.5px;
+  }
+
+  .user-bar-role {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .user-bar-role.admin {
+    background: rgba(0,229,160,0.15);
+    color: var(--accent);
+    border: 1px solid rgba(0,229,160,0.3);
+  }
+
+  .user-bar-role.staff {
+    background: rgba(255,107,53,0.15);
+    color: var(--out-color);
+    border: 1px solid rgba(255,107,53,0.3);
+  }
+
+  .logout-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 1px;
+  }
+
+  .logout-btn:hover {
+    color: var(--danger);
+    border-color: rgba(255,68,102,0.4);
+    background: rgba(255,68,102,0.07);
+  }
+
+  /* Staff restricted overlay */
+  .restricted {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.35;
+    filter: blur(2px);
+    user-select: none;
+  }
+
+  .restricted-msg {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    pointer-events: all;
+    opacity: 1;
+    filter: none;
+  }
+
+  .restricted-badge {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 10px 20px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+  }
+
   .sync-badge {
       top: 10px;
       right: 10px;
@@ -1321,6 +1519,204 @@
     .modal-row-value { font-size: 13px; }
   }
 
+  /* LOGIN SCREEN */
+  .login-screen {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 380px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+    animation: loginFadeIn 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  @keyframes loginFadeIn {
+    from { opacity: 0; transform: translateY(30px) scale(0.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .login-header {
+    padding: 32px 28px 24px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(160deg, rgba(0,229,160,0.05), transparent);
+  }
+
+  .login-logo {
+    width: 64px; height: 64px;
+    object-fit: contain;
+    filter: invert(1);
+    border-radius: 50%;
+    margin-bottom: 14px;
+  }
+
+  .login-brand {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+  }
+
+  .login-brand span { color: var(--accent); }
+
+  .login-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .login-body {
+    padding: 24px 28px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .login-btn {
+    padding: 13px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent);
+    color: #0d0f14;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+    margin-top: 4px;
+  }
+
+  .login-btn:hover {
+    background: #00ffb2;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(0,229,160,0.3);
+  }
+
+  .login-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .login-error {
+    background: rgba(255,68,102,0.1);
+    border: 1px solid rgba(255,68,102,0.3);
+    color: var(--danger);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    display: none;
+  }
+
+  .login-error.show { display: block; }
+
+  /* TOP BAR USER INFO */
+  .user-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    background: var(--surface2);
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  .user-bar-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text);
+    letter-spacing: 0.5px;
+  }
+
+  .user-bar-role {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .user-bar-role.admin {
+    background: rgba(0,229,160,0.15);
+    color: var(--accent);
+    border: 1px solid rgba(0,229,160,0.3);
+  }
+
+  .user-bar-role.staff {
+    background: rgba(255,107,53,0.15);
+    color: var(--out-color);
+    border: 1px solid rgba(255,107,53,0.3);
+  }
+
+  .logout-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 1px;
+  }
+
+  .logout-btn:hover {
+    color: var(--danger);
+    border-color: rgba(255,68,102,0.4);
+    background: rgba(255,68,102,0.07);
+  }
+
+  /* Staff restricted overlay */
+  .restricted {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.35;
+    filter: blur(2px);
+    user-select: none;
+  }
+
+  .restricted-msg {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    pointer-events: all;
+    opacity: 1;
+    filter: none;
+  }
+
+  .restricted-badge {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    padding: 10px 20px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+  }
+
   .sync-badge {
     position: fixed;
     top: 20px; right: 20px;
@@ -1343,6 +1739,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAdfyKy1J1S9wYn2lbv-cWzJBkcB_prMWk",
@@ -1355,9 +1752,11 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const auth = getAuth(app);
 
   // Expose db and firebase functions to global scope
   window._db = db;
+  window._auth = auth;
   window._collection = collection;
   window._addDoc = addDoc;
   window._getDocs = getDocs;
@@ -1366,11 +1765,23 @@
   window._onSnapshot = onSnapshot;
   window._query = query;
   window._orderBy = orderBy;
+  window._signInWithEmailAndPassword = signInWithEmailAndPassword;
+  window._signOut = signOut;
+  window._onAuthStateChanged = onAuthStateChanged;
   window._firebaseReady = true;
 
-  // Start real-time listener once DOM is ready
+  // Auth state listener
   window.addEventListener('load', () => {
-    startRealtimeSync();
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        window._currentUser = user;
+        checkUserRole(user.uid);
+      } else {
+        window._currentUser = null;
+        window._currentRole = null;
+        showLoginScreen();
+      }
+    });
   });
 
   window.startRealtimeSync = function() {
@@ -1405,6 +1816,11 @@
     </div>
     <div class="header-right">
       <div class="date-display" id="dateDisplay"></div>
+      <div id="userBar" style="display:none" class="user-bar">
+        <div class="user-bar-name" id="userBarName"></div>
+        <div class="user-bar-role" id="userBarRole"></div>
+        <button class="logout-btn" onclick="doLogout()">LOGOUT</button>
+      </div>
       <div class="status-dot"></div>
     </div>
   </header>
@@ -1520,6 +1936,30 @@
     </div>
   </div>
 
+</div>
+
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="loginScreen" style="display:none">
+  <div class="login-box">
+    <div class="login-header">
+      <img class="login-logo" id="loginLogo" alt="Logo"/>
+      <div class="login-brand">Brew <span>&amp;</span> Stirr</div>
+      <div class="login-sub">Stock Management System</div>
+    </div>
+    <div class="login-body">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="staff@brewstirr.com" autocomplete="email"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter') doLogin()"/>
+      </div>
+      <div class="login-error" id="loginError"></div>
+      <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In →</button>
+    </div>
+  </div>
 </div>
 
 <!-- TRANSACTION DETAIL MODAL -->
@@ -1971,6 +2411,133 @@
     return d.toLocaleDateString('en-GB', {
       weekday: 'short', day: '2-digit', month: 'short', year: 'numeric'
     }) + ' · ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  // ===== AUTH FUNCTIONS =====
+
+  // Copy logo src to login screen
+  window.addEventListener('DOMContentLoaded', () => {
+    const mainLogo = document.querySelector('header img');
+    const loginLogo = document.getElementById('loginLogo');
+    if (mainLogo && loginLogo) loginLogo.src = mainLogo.src;
+  });
+
+  // Show login screen
+  function showLoginScreen() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.querySelector('.app').style.display = 'none';
+  }
+
+  // Show main app
+  function showApp() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.querySelector('.app').style.display = 'block';
+  }
+
+  // Check user role from Firestore users collection
+  async function checkUserRole(uid) {
+    try {
+      const userDoc = await window._getDocs(window._collection(window._db, 'users'));
+      let role = 'staff';
+      let displayName = window._currentUser.email;
+      userDoc.forEach(d => {
+        if (d.id === uid) {
+          role = d.data().role || 'staff';
+          displayName = d.data().name || window._currentUser.email;
+        }
+      });
+      window._currentRole = role;
+      window._currentDisplayName = displayName;
+      updateUserBar(displayName, role);
+      applyRoleRestrictions(role);
+      showApp();
+      startRealtimeSync();
+    } catch(e) {
+      console.error('Role check error:', e);
+      window._currentRole = 'staff';
+      updateUserBar(window._currentUser.email, 'staff');
+      applyRoleRestrictions('staff');
+      showApp();
+      startRealtimeSync();
+    }
+  }
+
+  // Update user bar in header
+  function updateUserBar(name, role) {
+    const bar = document.getElementById('userBar');
+    const nameEl = document.getElementById('userBarName');
+    const roleEl = document.getElementById('userBarRole');
+    bar.style.display = 'flex';
+    nameEl.textContent = name;
+    roleEl.textContent = role.toUpperCase();
+    roleEl.className = 'user-bar-role ' + role;
+  }
+
+  // Apply restrictions based on role
+  function applyRoleRestrictions(role) {
+    if (role === 'admin') return; // full access
+
+    // Staff: hide stock levels, transaction log, delete buttons
+    const stockPanel = document.getElementById('stockPanelTop');
+    const tablePanel = document.querySelector('.table-panel');
+
+    if (stockPanel) {
+      stockPanel.style.position = 'relative';
+      stockPanel.innerHTML += \`
+        <div class="restricted-msg">
+          <div class="restricted-badge">🔒 ADMIN ONLY</div>
+        </div>\`;
+      stockPanel.querySelector('.panel-header') && (stockPanel.querySelector('.panel-header').style.filter = 'blur(3px)');
+      const levels = stockPanel.querySelector('#stockLevels');
+      if (levels) levels.style.filter = 'blur(4px)', levels.style.pointerEvents = 'none';
+    }
+
+    if (tablePanel) {
+      tablePanel.style.position = 'relative';
+      tablePanel.innerHTML += \`
+        <div class="restricted-msg" style="top:0;left:0;right:0;bottom:0;position:absolute;background:rgba(13,15,20,0.85);border-radius:16px;display:flex;align-items:center;justify-content:center;z-index:10">
+          <div class="restricted-badge">🔒 ADMIN ONLY — Transaction Log</div>
+        </div>\`;
+    }
+  }
+
+  // Login
+  async function doLogin() {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const btn = document.getElementById('loginBtn');
+    const errEl = document.getElementById('loginError');
+
+    if (!email || !password) {
+      errEl.textContent = 'Please enter email and password';
+      errEl.classList.add('show');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Signing in...';
+    errEl.classList.remove('show');
+
+    try {
+      await window._signInWithEmailAndPassword(window._auth, email, password);
+      // onAuthStateChanged will handle the rest
+    } catch(e) {
+      console.error(e);
+      let msg = 'Invalid email or password';
+      if (e.code === 'auth/too-many-requests') msg = 'Too many attempts. Try again later.';
+      if (e.code === 'auth/user-not-found') msg = 'Account not found';
+      errEl.textContent = msg;
+      errEl.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'Sign In →';
+    }
+  }
+
+  // Logout
+  async function doLogout() {
+    await window._signOut(window._auth);
+    transactions = [];
+    renderAll();
   }
 
   // CLEAR DATE FILTER
