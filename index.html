@@ -301,343 +301,340 @@ tbody tr:hover td{background:rgba(0,229,160,0.04)!important}
 <div id="toast"></div>
 
 <script>
-// Wait for DOM + Firebase to be ready
-document.addEventListener('DOMContentLoaded', function() {
-
-  // Check firebase loaded
-  if (typeof firebase === 'undefined') {
-    alert('Firebase failed to load. Check internet connection.');
+// Define doLogin FIRST before anything else can crash
+window.doLogin = function() {
+  var email = document.getElementById('loginEmail').value.trim();
+  var password = document.getElementById('loginPassword').value;
+  var btn = document.getElementById('loginBtn');
+  var err = document.getElementById('loginError');
+  if(!email||!password){
+    err.textContent='Please enter email and password';
+    err.style.cssText='display:block;background:rgba(255,68,102,0.1);border:1px solid rgba(255,68,102,0.3);color:#ff4466;padding:10px;border-radius:8px;font-size:12px';
     return;
   }
-
-
-  // ── Firebase init ───────────────────────────────────────
-  var firebaseConfig = {
-    apiKey: "AIzaSyAdfyKy1J1S9wYn2lbv-cWzJBkcB_prMWk",
-    authDomain: "brew-stirr-stock.firebaseapp.com",
-    projectId: "brew-stirr-stock",
-    storageBucket: "brew-stirr-stock.firebasestorage.app",
-    messagingSenderId: "75820675981",
-    appId: "1:75820675981:web:f9d6636d94aac81f9443c4"
-  };
-  firebase.initializeApp(firebaseConfig);
-  var db = firebase.firestore();
-  var auth = firebase.auth();
-
-  // ── State ───────────────────────────────────────────────
-  var transactions = [];
-  var currentType = 'in';
-  var currentFilter = 'all';
-  var currentModalTx = null;
-
-  document.getElementById('dateDisplay').textContent = new Date().toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
-
-  // ── Category → Items ────────────────────────────────────
-  var ITEMS = {
-    'Coffee': ['Kopi Susu Gula Aren','Hazelnut Latte','Vanila Latte','Salted Caramel Latte'],
-    'Non Coffee': ['Matcha','Taro','Chocolate']
-  };
-
-  function onCatChange(cat) {
-    var s = document.getElementById('itemName');
-    if (!cat) {
-      s.innerHTML = '<option value="">&#8212; Select Category First &#8212;</option>';
-      s.disabled = true; s.style.opacity = '0.5';
-    } else {
-      var opts = '<option value="">&#8212; Select Item &#8212;</option>';
-      (ITEMS[cat]||[]).forEach(function(i){ opts += '<option value="'+i+'">'+i+'</option>'; });
-      s.innerHTML = opts;
-      s.disabled = false; s.style.opacity = '1';
-    }
+  if(typeof firebase==='undefined'||!window._auth){
+    err.textContent='Firebase not ready. Please refresh page.';
+    err.style.cssText='display:block;background:rgba(255,68,102,0.1);border:1px solid rgba(255,68,102,0.3);color:#ff4466;padding:10px;border-radius:8px;font-size:12px';
+    return;
   }
-
-  // ── Type toggle ─────────────────────────────────────────
-  function setType(t) {
-    currentType = t;
-    document.querySelectorAll('.type-btn').forEach(function(b){b.classList.remove('active');});
-    document.querySelector('.type-btn.'+t).classList.add('active');
-    var btn = document.getElementById('submitBtn');
-    var kf = document.getElementById('keteranganField');
-    if (t === 'in') {
-      btn.textContent = '+ Record Stock In'; btn.classList.remove('out-mode');
-      kf.style.display = 'none'; document.getElementById('itemKeterangan').value = '';
-    } else {
-      btn.textContent = '- Record Stock Out'; btn.classList.add('out-mode');
-      kf.style.display = 'flex';
-    }
-  }
-
-  // ── Filter ──────────────────────────────────────────────
-  function setFilter(f, el) {
-    currentFilter = f;
-    document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active');});
-    el.classList.add('active');
-    renderTable();
-  }
-
-  function clearDateFilter() {
-    document.getElementById('dateFrom').value = '';
-    document.getElementById('dateTo').value = '';
-    renderTable();
-  }
-
-  // ── Stock helpers ────────────────────────────────────────
-  function getStockByUnit(name, unit) {
-    return transactions.filter(function(t){return t.name===name&&t.unit===unit;})
-      .reduce(function(s,t){return t.type==='in'?s+parseInt(t.qty):s-parseInt(t.qty);},0);
-  }
-
-  // ── Add transaction ──────────────────────────────────────
-  function addTransaction() {
-    var name = document.getElementById('itemName').value;
-    var qty = parseInt(document.getElementById('itemQty').value)||0;
-    var cat = document.getElementById('itemCategory').value;
-    var unit = document.getElementById('itemUnit').value;
-    var notes = document.getElementById('itemNotes').value.trim();
-    var keterangan = document.getElementById('itemKeterangan').value;
-
-    if (!name) { showToast('Please select an item', true); return; }
-    if (!qty||qty<1) { showToast('Enter a valid quantity', true); return; }
-    if (currentType==='out'&&!keterangan) { showToast('Please select Keterangan', true); return; }
-    if (currentType==='out') {
-      var cur = getStockByUnit(name,unit);
-      if (cur<qty) { showToast('Only '+cur+' '+unit+' available!', true); return; }
-    }
-
-    db.collection('transactions').add({
-      name:name, category:cat||'Uncategorized', qty:qty, unit:unit,
-      type:currentType, keterangan:currentType==='out'?keterangan:'',
-      notes:notes, time:new Date().toISOString()
-    }).then(function(){
-      clearForm();
-      showToast((currentType==='in'?'IN: ':'OUT: ')+qty+' '+unit+' of '+name);
-    }).catch(function(e){
-      showToast('Save failed: '+e.message, true);
-    });
-  }
-
-  // ── Delete transaction ───────────────────────────────────
-  function deleteTransaction(id) {
-    db.collection('transactions').doc(id).delete()
-      .then(function(){ showToast('Transaction removed'); })
-      .catch(function(){ showToast('Delete failed', true); });
-  }
-
-  // ── Clear form ───────────────────────────────────────────
-  function clearForm() {
-    document.getElementById('itemCategory').value = '';
-    onCatChange('');
-    document.getElementById('itemQty').value = '';
-    document.getElementById('itemNotes').value = '';
-    document.getElementById('itemKeterangan').value = '';
-    setType('in');
-  }
-
-  // ── Render table ─────────────────────────────────────────
-  function renderTable() {
-    var body = document.getElementById('transactionBody');
-    var empty = document.getElementById('emptyLog');
-    var search = document.getElementById('searchBox').value.toLowerCase();
-    var dateFrom = document.getElementById('dateFrom').value;
-    var dateTo = document.getElementById('dateTo').value;
-
-    var filtered = transactions.filter(function(tx) {
-      if (currentFilter!=='all'&&tx.type!==currentFilter) return false;
-      if (search&&!tx.name.toLowerCase().includes(search)&&!tx.category.toLowerCase().includes(search)) return false;
-      if (dateFrom&&tx.time.substring(0,10)<dateFrom) return false;
-      if (dateTo&&tx.time.substring(0,10)>dateTo) return false;
-      return true;
-    });
-
-    if (!filtered.length) { body.innerHTML=''; empty.style.display='block'; return; }
-    empty.style.display='none';
-    body.innerHTML = filtered.map(function(tx,i){
-      return '<tr onclick="openModal(''+tx._firebaseId+'')">'
-        +'<td><div class="item-name">'+esc(tx.name)+'</div><div class="item-cat">'+esc(tx.category)+'</div></td>'
-        +'<td><span class="badge '+tx.type+'">'+(tx.type==='in'?'IN':'OUT')+'</span></td>'
-        +'<td>'+(tx.keterangan?'<span class="badge" style="background:rgba(255,204,0,0.1);color:var(--warn);border:1px solid rgba(255,204,0,0.2)">'+esc(tx.keterangan)+'</span>':'<span style="color:var(--muted);font-size:11px">-</span>')+'</td>'
-        +'<td class="qty-cell '+tx.type+'">'+(tx.type==='in'?'+':'-')+tx.qty+'</td>'
-        +'<td style="font-family:JetBrains Mono,monospace;font-size:11px;color:var(--muted)">'+esc(tx.unit)+'</td>'
-        +'<td style="color:var(--muted);font-size:12px">'+esc(tx.notes||'-')+'</td>'
-        +'<td class="time-cell">'+fmtTime(tx.time)+'</td>'
-        +'<td><button class="del-btn" onclick="event.stopPropagation();deleteTransaction(''+tx._firebaseId+'')">&#10005;</button></td>'
-        +'</tr>';
-    }).join('');
-  }
-
-  // ── Render stock levels ──────────────────────────────────
-  function renderStockLevels() {
-    var container = document.getElementById('stockLevels');
-    var SIZES = ['Bottle 250ml','Bottle 500ml','Bottle 1L'];
-    var ALL = ['Kopi Susu Gula Aren','Hazelnut Latte','Vanila Latte','Salted Caramel Latte','Matcha','Taro','Chocolate'];
-    var stockMap = {};
-    transactions.forEach(function(tx){
-      if (!stockMap[tx.name]) stockMap[tx.name]={};
-      if (!stockMap[tx.name][tx.unit]) stockMap[tx.name][tx.unit]=0;
-      stockMap[tx.name][tx.unit]+= tx.type==='in'?parseInt(tx.qty):-parseInt(tx.qty);
-    });
-    var active = ALL.filter(function(n){return stockMap[n];});
-    if (!active.length) { container.innerHTML='<div class="empty-state"><div class="empty-icon">&#128451;</div>NO STOCK DATA YET</div>'; return; }
-    var maxQ = 1;
-    active.forEach(function(n){ SIZES.forEach(function(s){ var q=stockMap[n]&&stockMap[n][s]||0; if(q>maxQ)maxQ=q; }); });
-    container.innerHTML = active.map(function(item){
-      var cat = (transactions.find(function(t){return t.name===item;})||{}).category||'';
-      var rows = SIZES.map(function(size){
-        if (!stockMap[item]||stockMap[item][size]===undefined) return '';
-        var qty = stockMap[item][size];
-        var pct = Math.max(0,(qty/maxQ)*100);
-        var low = qty<=10&&qty>0;
-        var bar = qty<=0?'var(--danger)':low?'var(--warn)':qty>maxQ*0.6?'var(--accent)':'var(--out-color)';
-        var qc = qty<=0?'var(--danger)':low?'var(--warn)':'var(--text)';
-        return '<div class="stock-size-row"><div class="stock-size-label">'+size+'</div>'
-          +'<div class="stock-bar-wrap"><div class="stock-bar" style="width:'+pct+'%;background:'+bar+'"></div></div>'
-          +'<div class="stock-qty" style="color:'+qc+'">'+qty+(low?' &#9888;':'')+(qty<=0?' <span style="font-size:9px;color:var(--danger)">OUT</span>':'')+'</div></div>';
-      }).join('');
-      return '<div class="stock-item-group"><div class="stock-group-header"><div><div class="stock-item-name">'+esc(item)+'</div><div class="stock-item-cat">'+esc(cat)+'</div></div></div><div class="stock-size-rows">'+rows+'</div></div>';
-    }).join('');
-  }
-
-  // ── Render stats ─────────────────────────────────────────
-  function renderStats() {
-    var stock = {};
-    transactions.forEach(function(tx){
-      if(!stock[tx.name])stock[tx.name]=0;
-      stock[tx.name]+= tx.type==='in'?parseInt(tx.qty):-parseInt(tx.qty);
-    });
-    var items = Object.keys(stock);
-    var totalIn = transactions.filter(function(t){return t.type==='in';}).reduce(function(s,t){return s+parseInt(t.qty);},0);
-    var totalOut = transactions.filter(function(t){return t.type==='out';}).reduce(function(s,t){return s+parseInt(t.qty);},0);
-    var low = items.filter(function(n){return stock[n]>0&&stock[n]<=10;}).length;
-    document.getElementById('statTotal').textContent = items.length;
-    document.getElementById('statIn').textContent = totalIn;
-    document.getElementById('statOut').textContent = totalOut;
-    document.getElementById('statLow').textContent = low;
-  }
-
-  function renderAll() { renderTable(); renderStockLevels(); renderStats(); }
-
-  // ── Modal ────────────────────────────────────────────────
-  function openModal(id) {
-    var tx = transactions.find(function(t){return t._firebaseId===id;});
-    if (!tx) return;
-    currentModalTx = tx;
-    var isIn = tx.type==='in';
-    document.getElementById('modalBody').innerHTML =
-      '<div><span class="modal-type-badge '+tx.type+'">'+(isIn?'STOCK IN':'STOCK OUT')+'</span></div>'
-      +'<div class="modal-row"><div class="modal-row-icon">&#9749;</div><div><div class="modal-row-label">Item</div><div class="modal-row-value">'+esc(tx.name)+'</div></div></div>'
-      +'<div class="modal-row"><div class="modal-row-icon">&#127991;</div><div><div class="modal-row-label">Category</div><div class="modal-row-value">'+esc(tx.category||'-')+'</div></div></div>'
-      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
-      +'<div class="modal-row"><div class="modal-row-icon">&#128290;</div><div><div class="modal-row-label">Qty</div><div class="modal-row-value '+(isIn?'accent':'out-color')+'">'+(isIn?'+':'-')+tx.qty+'</div></div></div>'
-      +'<div class="modal-row"><div class="modal-row-icon">&#127870;</div><div><div class="modal-row-label">Unit</div><div class="modal-row-value">'+esc(tx.unit)+'</div></div></div></div>'
-      +(tx.keterangan?'<div class="modal-row"><div class="modal-row-icon">&#128204;</div><div><div class="modal-row-label">Keterangan</div><div class="modal-row-value warn">'+esc(tx.keterangan)+'</div></div></div>':'')
-      +(tx.notes?'<div class="modal-row"><div class="modal-row-icon">&#128221;</div><div><div class="modal-row-label">Notes</div><div class="modal-row-value" style="font-weight:400;font-size:13px">'+esc(tx.notes)+'</div></div></div>':'')
-      +'<div class="modal-row"><div class="modal-row-icon">&#128336;</div><div><div class="modal-row-label">Time</div><div class="modal-row-value" style="font-family:JetBrains Mono,monospace;font-size:12px;font-weight:500">'+fmtFull(tx.time)+'</div></div></div>';
-    document.getElementById('modalOverlay').classList.add('show');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeModal(e) { if (e.target===document.getElementById('modalOverlay')) closeModalDirect(); }
-  function closeModalDirect() { document.getElementById('modalOverlay').classList.remove('show'); document.body.style.overflow=''; currentModalTx=null; }
-  function modalDelete() { if (!currentModalTx) return; var id=currentModalTx._firebaseId; closeModalDirect(); deleteTransaction(id); }
-
-  // ── Toast ────────────────────────────────────────────────
-  var toastTimer;
-  function showToast(msg, error) {
-    var el = document.getElementById('toast');
-    el.textContent = msg;
-    el.className = 'show'+(error?' error':'');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(function(){el.className='';}, 3000);
-  }
-
-  // ── Sync badge ───────────────────────────────────────────
-  var syncTimer;
-  function showSyncBadge() {
-    var b = document.getElementById('syncBadge');
-    b.classList.add('show');
-    clearTimeout(syncTimer);
-    syncTimer = setTimeout(function(){b.classList.remove('show');}, 2500);
-  }
-
-  // ── Helpers ──────────────────────────────────────────────
-  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-  function fmtTime(iso) { var d=new Date(iso); return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
-  function fmtFull(iso) { var d=new Date(iso); return d.toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'}); }
-
-  // ── Auth ─────────────────────────────────────────────────
-  function doLogin() {
-    var email = document.getElementById('loginEmail').value.trim();
-    var password = document.getElementById('loginPassword').value;
-    var btn = document.getElementById('loginBtn');
-    var err = document.getElementById('loginError');
-
-    // Check firebase loaded
-    if (typeof firebase === 'undefined' || !auth) {
-      err.textContent='Firebase not loaded. Please refresh.';
-      err.style.background='rgba(255,68,102,0.1)'; err.style.borderColor='rgba(255,68,102,0.3)'; err.style.color='var(--danger)';
-      err.classList.add('show'); return;
-    }
-
-    if (!email||!password) {
-      err.textContent='Please enter email and password';
-      err.style.background='rgba(255,68,102,0.1)'; err.style.borderColor='rgba(255,68,102,0.3)'; err.style.color='var(--danger)';
-      err.classList.add('show'); return;
-    }
-    btn.disabled=true; btn.textContent='Signing in...';
-    err.textContent='Connecting...'; err.classList.add('show');
-    err.style.background='rgba(0,229,160,0.1)'; err.style.borderColor='rgba(0,229,160,0.3)'; err.style.color='var(--accent)';
-    auth.signInWithEmailAndPassword(email,password).then(function(){
-      err.textContent='Success! Loading...';
-    }).catch(function(e){
-      var msg='Wrong email or password ('+e.code+')';
-      if(e.code==='auth/too-many-requests') msg='Too many attempts. Try later.';
-      if(e.code==='auth/network-request-failed') msg='No internet connection.';
-      if(e.code==='auth/unauthorized-domain') msg='Domain not authorized in Firebase.';
-      err.textContent=msg;
-      err.style.background='rgba(255,68,102,0.1)'; err.style.borderColor='rgba(255,68,102,0.3)'; err.style.color='var(--danger)';
+  btn.disabled=true; btn.textContent='Signing in...';
+  err.textContent='Connecting...';
+  err.style.cssText='display:block;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.3);color:#00e5a0;padding:10px;border-radius:8px;font-size:12px';
+  window._auth.signInWithEmailAndPassword(email,password)
+    .then(function(){err.textContent='Success! Loading...';})
+    .catch(function(e){
+      var msg='Wrong email or password';
+      if(e.code==='auth/too-many-requests') msg='Too many attempts';
+      if(e.code==='auth/network-request-failed') msg='No internet';
+      if(e.code==='auth/unauthorized-domain') msg='Domain not authorized';
+      err.textContent=msg+' ('+e.code+')';
+      err.style.cssText='display:block;background:rgba(255,68,102,0.1);border:1px solid rgba(255,68,102,0.3);color:#ff4466;padding:10px;border-radius:8px;font-size:12px';
       btn.disabled=false; btn.textContent='Sign In';
     });
-  }
+};
 
-  function doLogout() {
-    auth.signOut();
-    transactions=[];
-    renderAll();
-  }
+window.doLogout = function(){
+  if(window._auth) window._auth.signOut();
+  transactions=[];
+  if(typeof renderAll==='function') renderAll();
+};
 
-  auth.onAuthStateChanged(function(user) {
-    if (!user) {
-      document.getElementById('loginScreen').style.display='flex';
-      document.getElementById('mainApp').style.display='none';
-      return;
+
+// Firebase init runs immediately (Firebase compat scripts already loaded)
+var firebaseConfig = {
+  apiKey: "AIzaSyAdfyKy1J1S9wYn2lbv-cWzJBkcB_prMWk",
+  authDomain: "brew-stirr-stock.firebaseapp.com",
+  projectId: "brew-stirr-stock",
+  storageBucket: "brew-stirr-stock.firebasestorage.app",
+  messagingSenderId: "75820675981",
+  appId: "1:75820675981:web:f9d6636d94aac81f9443c4"
+};
+try {
+  firebase.initializeApp(firebaseConfig);
+  window._db = firebase.firestore();
+  window._auth = firebase.auth();
+  var db = window._db;
+  var auth = window._auth;
+} catch(e) {
+  console.error('Firebase init error:', e);
+}
+
+// State
+var transactions = [];
+var currentType = 'in';
+var currentFilter = 'all';
+var currentModalTx = null;
+
+var ITEMS = {
+  'Coffee': ['Kopi Susu Gula Aren','Hazelnut Latte','Vanila Latte','Salted Caramel Latte'],
+  'Non Coffee': ['Matcha','Taro','Chocolate']
+};
+
+// All onclick functions must be on window
+// doLogin defined above
+var _placeholder1 = function() {
+  var email = document.getElementById('loginEmail').value.trim();
+  var password = document.getElementById('loginPassword').value;
+  var btn = document.getElementById('loginBtn');
+  var err = document.getElementById('loginError');
+  if (!email||!password) {
+    err.textContent='Please enter email and password';
+    err.style.cssText='display:block;background:rgba(255,68,102,0.1);border:1px solid rgba(255,68,102,0.3);color:#ff4466;padding:10px;border-radius:8px;font-size:12px;margin-top:4px';
+    return;
+  }
+  btn.disabled=true; btn.textContent='Signing in...';
+  err.textContent='Connecting...';
+  err.style.cssText='display:block;background:rgba(0,229,160,0.1);border:1px solid rgba(0,229,160,0.3);color:#00e5a0;padding:10px;border-radius:8px;font-size:12px;margin-top:4px';
+  auth.signInWithEmailAndPassword(email,password)
+    .then(function(){ err.textContent='Success! Loading...'; })
+    .catch(function(e){
+      var msg='Wrong email or password';
+      if(e.code==='auth/too-many-requests') msg='Too many attempts';
+      if(e.code==='auth/network-request-failed') msg='No internet';
+      if(e.code==='auth/unauthorized-domain') msg='Domain not authorized in Firebase';
+      err.textContent=msg+' ('+e.code+')';
+      err.style.cssText='display:block;background:rgba(255,68,102,0.1);border:1px solid rgba(255,68,102,0.3);color:#ff4466;padding:10px;border-radius:8px;font-size:12px;margin-top:4px';
+      btn.disabled=false; btn.textContent='Sign In';
+    });
+};
+
+// doLogout defined above
+var _placeholder2 = function() {
+  auth.signOut();
+  transactions=[];
+  renderAll();
+};
+
+window.onCatChange = function(cat) {
+  var s = document.getElementById('itemName');
+  if (!cat) {
+    s.innerHTML='<option value="">— Select Category First —</option>';
+    s.disabled=true; s.style.opacity='0.5';
+  } else {
+    var opts='<option value="">— Select Item —</option>';
+    (ITEMS[cat]||[]).forEach(function(i){ opts+='<option value="'+i+'">'+i+'</option>'; });
+    s.innerHTML=opts; s.disabled=false; s.style.opacity='1';
+  }
+};
+
+window.setType = function(t) {
+  currentType=t;
+  document.querySelectorAll('.type-btn').forEach(function(b){b.classList.remove('active');});
+  document.querySelector('.type-btn.'+t).classList.add('active');
+  var btn=document.getElementById('submitBtn');
+  var kf=document.getElementById('keteranganField');
+  if(t==='in'){btn.textContent='+ Record Stock In';btn.classList.remove('out-mode');kf.style.display='none';document.getElementById('itemKeterangan').value='';}
+  else{btn.textContent='- Record Stock Out';btn.classList.add('out-mode');kf.style.display='flex';}
+};
+
+window.setFilter = function(f,el) {
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active');});
+  el.classList.add('active'); renderTable();
+};
+
+window.clearDateFilter = function() {
+  document.getElementById('dateFrom').value='';
+  document.getElementById('dateTo').value='';
+  renderTable();
+};
+
+window.addTransaction = function() {
+  var name=document.getElementById('itemName').value;
+  var qty=parseInt(document.getElementById('itemQty').value)||0;
+  var cat=document.getElementById('itemCategory').value;
+  var unit=document.getElementById('itemUnit').value;
+  var notes=document.getElementById('itemNotes').value.trim();
+  var keterangan=document.getElementById('itemKeterangan').value;
+  if(!name){showToast('Please select an item',true);return;}
+  if(!qty||qty<1){showToast('Enter a valid quantity',true);return;}
+  if(currentType==='out'&&!keterangan){showToast('Please select Keterangan',true);return;}
+  if(currentType==='out'){
+    var cur=getStockByUnit(name,unit);
+    if(cur<qty){showToast('Only '+cur+' '+unit+' available!',true);return;}
+  }
+  db.collection('transactions').add({
+    name:name,category:cat||'Uncategorized',qty:qty,unit:unit,
+    type:currentType,keterangan:currentType==='out'?keterangan:'',
+    notes:notes,time:new Date().toISOString()
+  }).then(function(){
+    clearForm();
+    showToast((currentType==='in'?'IN: ':'OUT: ')+qty+' '+unit+' of '+name);
+  }).catch(function(e){ showToast('Save failed: '+e.message,true); });
+};
+
+window.deleteTransaction = function(id) {
+  db.collection('transactions').doc(id).delete()
+    .then(function(){showToast('Transaction removed');})
+    .catch(function(){showToast('Delete failed',true);});
+};
+
+window.openModal = function(id) {
+  var tx=transactions.find(function(t){return t._firebaseId===id;});
+  if(!tx) return;
+  currentModalTx=tx;
+  var isIn=tx.type==='in';
+  document.getElementById('modalBody').innerHTML=
+    '<div><span class="modal-type-badge '+tx.type+'">'+(isIn?'STOCK IN':'STOCK OUT')+'</span></div>'
+    +'<div class="modal-row"><div class="modal-row-icon">&#9749;</div><div><div class="modal-row-label">Item</div><div class="modal-row-value">'+esc(tx.name)+'</div></div></div>'
+    +'<div class="modal-row"><div class="modal-row-icon">&#127991;</div><div><div class="modal-row-label">Category</div><div class="modal-row-value">'+esc(tx.category||'-')+'</div></div></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+    +'<div class="modal-row"><div class="modal-row-icon">&#128290;</div><div><div class="modal-row-label">Qty</div><div class="modal-row-value '+(isIn?'accent':'out-color')+'">'+(isIn?'+':'-')+tx.qty+'</div></div></div>'
+    +'<div class="modal-row"><div class="modal-row-icon">&#127870;</div><div><div class="modal-row-label">Unit</div><div class="modal-row-value">'+esc(tx.unit)+'</div></div></div></div>'
+    +(tx.keterangan?'<div class="modal-row"><div class="modal-row-icon">&#128204;</div><div><div class="modal-row-label">Keterangan</div><div class="modal-row-value warn">'+esc(tx.keterangan)+'</div></div></div>':'')
+    +(tx.notes?'<div class="modal-row"><div class="modal-row-icon">&#128221;</div><div><div class="modal-row-label">Notes</div><div class="modal-row-value" style="font-weight:400;font-size:13px">'+esc(tx.notes)+'</div></div></div>':'')
+    +'<div class="modal-row"><div class="modal-row-icon">&#128336;</div><div><div class="modal-row-label">Time</div><div class="modal-row-value" style="font-family:monospace;font-size:12px">'+fmtFull(tx.time)+'</div></div></div>';
+  document.getElementById('modalOverlay').classList.add('show');
+  document.body.style.overflow='hidden';
+};
+
+window.closeModal = function(e){if(e.target===document.getElementById('modalOverlay'))closeModalDirect();};
+window.closeModalDirect = function(){document.getElementById('modalOverlay').classList.remove('show');document.body.style.overflow='';currentModalTx=null;};
+window.modalDelete = function(){if(!currentModalTx)return;var id=currentModalTx._firebaseId;closeModalDirect();deleteTransaction(id);};
+
+// Internal helpers
+function getStockByUnit(name,unit){
+  return transactions.filter(function(t){return t.name===name&&t.unit===unit;})
+    .reduce(function(s,t){return t.type==='in'?s+parseInt(t.qty):s-parseInt(t.qty);},0);
+}
+
+function clearForm(){
+  document.getElementById('itemCategory').value='';
+  window.onCatChange('');
+  document.getElementById('itemQty').value='';
+  document.getElementById('itemNotes').value='';
+  document.getElementById('itemKeterangan').value='';
+  window.setType('in');
+}
+
+function renderTable(){
+  var body=document.getElementById('transactionBody');
+  var empty=document.getElementById('emptyLog');
+  var search=document.getElementById('searchBox').value.toLowerCase();
+  var df=document.getElementById('dateFrom').value;
+  var dt=document.getElementById('dateTo').value;
+  var filtered=transactions.filter(function(tx){
+    if(currentFilter!=='all'&&tx.type!==currentFilter)return false;
+    if(search&&!tx.name.toLowerCase().includes(search)&&!tx.category.toLowerCase().includes(search))return false;
+    if(df&&tx.time.substring(0,10)<df)return false;
+    if(dt&&tx.time.substring(0,10)>dt)return false;
+    return true;
+  });
+  if(!filtered.length){body.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  body.innerHTML=filtered.map(function(tx){
+    return '<tr onclick="openModal(''+tx._firebaseId+'')">'
+      +'<td><div class="item-name">'+esc(tx.name)+'</div><div class="item-cat">'+esc(tx.category)+'</div></td>'
+      +'<td><span class="badge '+tx.type+'">'+(tx.type==='in'?'IN':'OUT')+'</span></td>'
+      +'<td>'+(tx.keterangan?'<span class="badge" style="background:rgba(255,204,0,0.1);color:var(--warn);border:1px solid rgba(255,204,0,0.2)">'+esc(tx.keterangan)+'</span>':'-')+'</td>'
+      +'<td class="qty-cell '+tx.type+'">'+(tx.type==='in'?'+':'-')+tx.qty+'</td>'
+      +'<td style="font-family:monospace;font-size:11px;color:var(--muted)">'+esc(tx.unit)+'</td>'
+      +'<td style="color:var(--muted);font-size:12px">'+esc(tx.notes||'-')+'</td>'
+      +'<td class="time-cell">'+fmtTime(tx.time)+'</td>'
+      +'<td><button class="del-btn" onclick="event.stopPropagation();deleteTransaction(''+tx._firebaseId+'')">&#10005;</button></td>'
+      +'</tr>';
+  }).join('');
+}
+
+function renderStockLevels(){
+  var container=document.getElementById('stockLevels');
+  var SIZES=['Bottle 250ml','Bottle 500ml','Bottle 1L'];
+  var ALL=['Kopi Susu Gula Aren','Hazelnut Latte','Vanila Latte','Salted Caramel Latte','Matcha','Taro','Chocolate'];
+  var stockMap={};
+  transactions.forEach(function(tx){
+    if(!stockMap[tx.name])stockMap[tx.name]={};
+    if(!stockMap[tx.name][tx.unit])stockMap[tx.name][tx.unit]=0;
+    stockMap[tx.name][tx.unit]+=tx.type==='in'?parseInt(tx.qty):-parseInt(tx.qty);
+  });
+  var active=ALL.filter(function(n){return stockMap[n];});
+  if(!active.length){container.innerHTML='<div class="empty-state"><div class="empty-icon">&#128451;</div>NO STOCK DATA YET</div>';return;}
+  var maxQ=1;
+  active.forEach(function(n){SIZES.forEach(function(s){var q=stockMap[n]&&stockMap[n][s]||0;if(q>maxQ)maxQ=q;});});
+  container.innerHTML=active.map(function(item){
+    var cat=(transactions.find(function(t){return t.name===item;})||{}).category||'';
+    var rows=SIZES.map(function(size){
+      if(!stockMap[item]||stockMap[item][size]===undefined)return '';
+      var qty=stockMap[item][size];
+      var pct=Math.max(0,(qty/maxQ)*100);
+      var low=qty<=10&&qty>0;
+      var bar=qty<=0?'var(--danger)':low?'var(--warn)':qty>maxQ*0.6?'var(--accent)':'var(--out-color)';
+      var qc=qty<=0?'var(--danger)':low?'var(--warn)':'var(--text)';
+      return '<div class="stock-size-row"><div class="stock-size-label">'+size+'</div>'
+        +'<div class="stock-bar-wrap"><div class="stock-bar" style="width:'+pct+'%;background:'+bar+'"></div></div>'
+        +'<div class="stock-qty" style="color:'+qc+'">'+qty+(qty<=0?' <span style="font-size:9px;color:var(--danger)">OUT</span>':'')+'</div></div>';
+    }).join('');
+    return '<div class="stock-item-group"><div class="stock-group-header"><div><div class="stock-item-name">'+esc(item)+'</div><div class="stock-item-cat">'+esc(cat)+'</div></div></div><div class="stock-size-rows">'+rows+'</div></div>';
+  }).join('');
+}
+
+function renderStats(){
+  var stock={};
+  transactions.forEach(function(tx){if(!stock[tx.name])stock[tx.name]=0;stock[tx.name]+=tx.type==='in'?parseInt(tx.qty):-parseInt(tx.qty);});
+  var items=Object.keys(stock);
+  var tIn=transactions.filter(function(t){return t.type==='in';}).reduce(function(s,t){return s+parseInt(t.qty);},0);
+  var tOut=transactions.filter(function(t){return t.type==='out';}).reduce(function(s,t){return s+parseInt(t.qty);},0);
+  var low=items.filter(function(n){return stock[n]>0&&stock[n]<=10;}).length;
+  document.getElementById('statTotal').textContent=items.length;
+  document.getElementById('statIn').textContent=tIn;
+  document.getElementById('statOut').textContent=tOut;
+  document.getElementById('statLow').textContent=low;
+}
+
+function renderAll(){renderTable();renderStockLevels();renderStats();}
+
+var toastTimer;
+function showToast(msg,error){
+  var el=document.getElementById('toast');
+  el.textContent=msg; el.className='show'+(error?' error':'');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){el.className='';},3000);
+}
+
+var syncTimer;
+function showSyncBadge(){
+  var b=document.getElementById('syncBadge');
+  b.classList.add('show');
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(function(){b.classList.remove('show');},2500);
+}
+
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function fmtTime(iso){var d=new Date(iso);return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
+function fmtFull(iso){var d=new Date(iso);return d.toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+
+// Init date display
+document.getElementById('dateDisplay').textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
+
+// Auth state
+auth.onAuthStateChanged(function(user){
+  if(!user){
+    document.getElementById('loginScreen').style.display='flex';
+    document.getElementById('mainApp').style.display='none';
+    return;
+  }
+  db.collection('users').doc(user.uid).get().then(function(snap){
+    var role=snap.exists?(snap.data().role||'staff'):'staff';
+    var displayName=snap.exists?(snap.data().name||user.email):user.email;
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('mainApp').style.display='block';
+    var bar=document.getElementById('userBar');if(bar)bar.style.display='flex';
+    var ne=document.getElementById('userBarName');if(ne)ne.textContent=displayName;
+    var re=document.getElementById('userBarRole');if(re){re.textContent=role.toUpperCase();re.className='user-bar-role '+role;}
+    window._currentRole=role;
+    if(role==='staff'){
+      setTimeout(function(){
+        var sp=document.getElementById('stockPanelTop');
+        var tp=document.querySelector('.table-panel');
+        if(sp){sp.style.position='relative';var lvl=sp.querySelector('#stockLevels');if(lvl){lvl.style.filter='blur(4px)';lvl.style.pointerEvents='none';}var m=document.createElement('div');m.className='restricted-msg';m.innerHTML='<div class="restricted-badge">ADMIN ONLY</div>';sp.appendChild(m);}
+        if(tp){tp.style.position='relative';var m2=document.createElement('div');m2.style.cssText='position:absolute;inset:0;background:rgba(13,15,20,0.85);border-radius:16px;display:flex;align-items:center;justify-content:center;z-index:10';m2.innerHTML='<div class="restricted-badge">ADMIN ONLY</div>';tp.appendChild(m2);}
+      },500);
     }
-    db.collection('users').doc(user.uid).get().then(function(snap){
-      var role = snap.exists ? (snap.data().role||'staff') : 'staff';
-      var displayName = snap.exists ? (snap.data().name||user.email) : user.email;
-      document.getElementById('loginScreen').style.display='none';
-      document.getElementById('mainApp').style.display='block';
-      var bar=document.getElementById('userBar'); if(bar) bar.style.display='flex';
-      var ne=document.getElementById('userBarName'); if(ne) ne.textContent=displayName;
-      var re=document.getElementById('userBarRole'); if(re){re.textContent=role.toUpperCase();re.className='user-bar-role '+role;}
-      window._currentRole=role;
-
-      if (role==='staff') {
-        setTimeout(function(){
-          var sp=document.getElementById('stockPanelTop');
-          var tp=document.querySelector('.table-panel');
-          if(sp){sp.style.position='relative';var lvl=sp.querySelector('#stockLevels');if(lvl){lvl.style.filter='blur(4px)';lvl.style.pointerEvents='none';}var m=document.createElement('div');m.className='restricted-msg';m.innerHTML='<div class="restricted-badge">ADMIN ONLY</div>';sp.appendChild(m);}
-          if(tp){tp.style.position='relative';var m2=document.createElement('div');m2.style.cssText='position:absolute;inset:0;background:rgba(13,15,20,0.85);border-radius:16px;display:flex;align-items:center;justify-content:center;z-index:10';m2.innerHTML='<div class="restricted-badge">ADMIN ONLY</div>';tp.appendChild(m2);}
-        },500);
-      }
-
-      db.collection('transactions').orderBy('time','desc').onSnapshot(function(snap){
-        transactions=[];
-        snap.forEach(function(d){transactions.push(Object.assign({},d.data(),{_firebaseId:d.id}));});
-        renderAll(); showSyncBadge();
-      });
+    db.collection('transactions').orderBy('time','desc').onSnapshot(function(snap){
+      transactions=[];
+      snap.forEach(function(d){transactions.push(Object.assign({},d.data(),{_firebaseId:d.id}));});
+      renderAll(); showSyncBadge();
     });
   });
-
 });
 </script>
 </body>
