@@ -1735,11 +1735,11 @@
   }
   .sync-badge.show { opacity: 1; }
 </style>
-<!-- Firebase -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+<!-- Firebase compat (no modules needed) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script>
 
   const firebaseConfig = {
     apiKey: "AIzaSyAdfyKy1J1S9wYn2lbv-cWzJBkcB_prMWk",
@@ -1750,24 +1750,9 @@
     appId: "1:75820675981:web:f9d6636d94aac81f9443c4"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-  const auth = getAuth(app);
-
-  // Expose db and firebase functions to global scope
-  window._db = db;
-  window._auth = auth;
-  window._collection = collection;
-  window._addDoc = addDoc;
-  window._getDocs = getDocs;
-  window._deleteDoc = deleteDoc;
-  window._doc = doc;
-  window._onSnapshot = onSnapshot;
-  window._query = query;
-  window._orderBy = orderBy;
-  window._signInWithEmailAndPassword = signInWithEmailAndPassword;
-  window._signOut = signOut;
-  window._onAuthStateChanged = onAuthStateChanged;
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const auth = firebase.auth();
   window._firebaseReady = true;
 
   // Wait for DOM then start auth listener
@@ -1778,6 +1763,7 @@
       fn();
     }
   }
+  // No longer a module - can call window functions directly
 
   // Check role and show app
   async function handleUserLogin(user) {
@@ -1785,7 +1771,7 @@
     let role = 'staff';
     let displayName = user.email;
     try {
-      const snapshot = await getDocs(collection(db, 'users'));
+      const snapshot = await db.collection('users').get();
       let matched = false;
       snapshot.forEach(d => {
         const data = d.data();
@@ -1854,7 +1840,7 @@
 
   // Auth state listener
   waitForDOM(() => {
-    onAuthStateChanged(auth, (user) => {
+    auth.onAuthStateChanged((user) => {
       if (user) {
         handleUserLogin(user);
       } else {
@@ -1893,7 +1879,7 @@
     errEl.classList.add('show');
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await auth.signInWithEmailAndPassword(email, password);
       errEl.textContent = 'Success! Loading...';
     } catch(e) {
       console.error('Login error:', e.code, e.message);
@@ -1915,23 +1901,22 @@
   };
 
   window.doLogout = async function() {
-    await signOut(auth);
+    await auth.signOut();
     transactions = [];
     renderAll();
   };
 
   window.startRealtimeSync = function() {
-    const q = query(collection(db, 'transactions'), orderBy('time', 'desc'));
-    onSnapshot(q, (snapshot) => {
+    db.collection('transactions').orderBy('time', 'desc').onSnapshot((snapshot) => {
       transactions = [];
       snapshot.forEach(docSnap => {
         transactions.push({ ...docSnap.data(), _firebaseId: docSnap.id });
       });
-      renderAll();
-      showSyncBadge();
+      window.renderAll();
+      window.showSyncBadge();
     }, (error) => {
       console.error('Firestore error:', error);
-      showToast('Database connection error', true);
+      window.showToast('Database connection error', true);
     });
   };
 </script>
@@ -2199,8 +2184,16 @@
     const keterangan = document.getElementById('itemKeterangan').value;
     const qtyNum = parseInt(qty);
 
-    if (!name) { showToast('Item name is required', true); return; }
-    if (!qtyNum || qtyNum < 1) { showToast('Enter a valid quantity', true); return; }
+    // Show what we got
+    const toastEl = document.getElementById('toast');
+    if (toastEl) {
+      toastEl.textContent = 'name=' + (name||'EMPTY') + ' qty=' + qtyNum + ' cat=' + (cat||'EMPTY');
+      toastEl.className = 'show';
+      setTimeout(() => toastEl.className = '', 4000);
+    }
+
+    if (!name) { window.showToast('Item name is required', true); return; }
+    if (!qtyNum || qtyNum < 1) { window.showToast('Enter a valid quantity', true); return; }
     if (currentType === 'out' && !keterangan) { showToast('Please select Keterangan', true); return; }
 
     // Check stock per bottle size (unit)
@@ -2226,7 +2219,7 @@
 
     try {
       if (!window._firebaseReady) { showToast('Connecting to database...', true); return; }
-      await window._addDoc(window._collection(window._db, 'transactions'), tx);
+      await db.collection('transactions').add(tx);
       clearForm();
       showToast(`${currentType === 'in' ? '▲ IN' : '▼ OUT'}: ${qty} ${unit} of ${name}`);
     } catch(e) {
@@ -2289,7 +2282,7 @@
   window.deleteTransaction = async function deleteTransaction(id) {
     try {
       if (!window._firebaseReady) return;
-      await window._deleteDoc(window._doc(window._db, 'transactions', id));
+      await db.collection('transactions').doc(id).delete();
       showToast('Transaction removed');
     } catch(e) {
       console.error(e);
