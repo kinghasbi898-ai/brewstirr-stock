@@ -301,8 +301,18 @@ tbody tr:hover td{background:rgba(0,229,160,0.04)!important}
 <div id="toast"></div>
 
 <script>
+// Wait for DOM + Firebase to be ready
+document.addEventListener('DOMContentLoaded', function() {
+
+  // Check firebase loaded
+  if (typeof firebase === 'undefined') {
+    alert('Firebase failed to load. Check internet connection.');
+    return;
+  }
+
+
   // ── Firebase init ───────────────────────────────────────
-  const firebaseConfig = {
+  var firebaseConfig = {
     apiKey: "AIzaSyAdfyKy1J1S9wYn2lbv-cWzJBkcB_prMWk",
     authDomain: "brew-stirr-stock.firebaseapp.com",
     projectId: "brew-stirr-stock",
@@ -627,6 +637,8 @@ tbody tr:hover td{background:rgba(0,229,160,0.04)!important}
       });
     });
   });
+
+});
 </script>
 </body>
 </html>
