@@ -2236,16 +2236,30 @@
   }
 
   // CLEAR FORM
-  function clearForm() {
+  window.clearForm = function clearForm() {
     document.getElementById('itemCategory').value = '';
-    updateItemOptions();
+    // Reset item select directly
+    var s = document.getElementById('itemName');
+    s.innerHTML = '<option value="">— Select Category First —</option>';
+    s.disabled = true;
+    s.style.opacity = '0.5';
     document.getElementById('itemQty').value = '';
     document.getElementById('itemNotes').value = '';
-    document.getElementById('itemKeterangan').value = '';
+    var ket = document.getElementById('itemKeterangan');
+    if (ket) ket.value = '';
+    var ketField = document.getElementById('keteranganField');
+    if (ketField) ketField.style.display = 'none';
+    // Reset type to IN
+    currentType = 'in';
+    document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+    var inBtn = document.querySelector('.type-btn.in');
+    if (inBtn) inBtn.classList.add('active');
+    var submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) { submitBtn.textContent = '+ Record Stock In'; submitBtn.classList.remove('out-mode'); }
   }
 
   // GET STOCK LEVELS (total per item, for validation)
-  function getStock() {
+  window.getStock = function getStock() {
     const stock = {};
     transactions.forEach(tx => {
       if (!stock[tx.name]) stock[tx.name] = 0;
@@ -2256,14 +2270,14 @@
   }
 
   // GET STOCK BY UNIT (for per-unit validation)
-  function getStockByUnit(name, unit) {
+  window.getStockByUnit = function getStockByUnit(name, unit) {
     return transactions
       .filter(tx => tx.name === name && tx.unit === unit)
       .reduce((s, tx) => tx.type === 'in' ? s + parseInt(tx.qty) : s - parseInt(tx.qty), 0);
   }
 
   // GET ITEM META
-  function getItemMeta() {
+  window.getItemMeta = function getItemMeta() {
     const meta = {};
     transactions.forEach(tx => {
       if (!meta[tx.name]) meta[tx.name] = { category: tx.category, unit: tx.unit };
@@ -2289,7 +2303,7 @@
   }
 
   // RENDER ALL
-  function renderAll() {
+  window.renderAll = function renderAll() {
     renderTable();
     renderStockLevels();
     renderStats();
@@ -2349,7 +2363,7 @@
   }
 
   // RENDER STOCK LEVELS - broken down by bottle size
-  function renderStockLevels() {
+  window.renderStockLevels = function renderStockLevels() {
     const container = document.getElementById('stockLevels');
     const BOTTLE_SIZES = ['Bottle 250ml', 'Bottle 500ml', 'Bottle 1L'];
     const ALL_ITEMS = [
@@ -2423,7 +2437,7 @@
   }
 
   // RENDER STATS
-  function renderStats() {
+  window.renderStats = function renderStats() {
     const stock = getStock();
     const items = Object.keys(stock);
     const totalIn = transactions.filter(t => t.type==='in').reduce((s,t) => s+t.qty, 0);
@@ -2437,23 +2451,23 @@
   }
 
   // SUGGESTIONS
-  function updateSuggestions() {
+  window.updateSuggestions = function updateSuggestions() {
     // no longer needed - using fixed dropdown
   }
 
   // HELPERS
-  function formatTime(iso) {
+  window.formatTime = function formatTime(iso) {
     const d = new Date(iso);
     return d.toLocaleDateString('en-GB', {day:'2-digit',month:'short'}) + ' ' +
            d.toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit'});
   }
 
-  function escHtml(s) {
+  window.escHtml = function escHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
   let toastTimer;
-  function showToast(msg, error=false) {
+  window.showToast = function showToast(msg, error=false) {
     const el = document.getElementById('toast');
     el.textContent = msg;
     el.className = 'show' + (error ? ' error' : '');
@@ -2553,7 +2567,7 @@
     await deleteTransaction(id);
   }
 
-  function formatFullTime(iso) {
+  window.formatFullTime = function formatFullTime(iso) {
     const d = new Date(iso);
     return d.toLocaleDateString('en-GB', {
       weekday: 'short', day: '2-digit', month: 'short', year: 'numeric'
@@ -2760,7 +2774,7 @@
 
   // SYNC BADGE
   let syncTimer;
-  function showSyncBadge() {
+  window.showSyncBadge = function showSyncBadge() {
     const b = document.getElementById('syncBadge');
     b.classList.add('show');
     clearTimeout(syncTimer);
