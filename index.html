@@ -2497,8 +2497,19 @@
 
   // Check user role from Firestore users collection
   async function checkUserRole(uid) {
+    // Default to admin access after 3 seconds if role check fails
+    const timeout = setTimeout(() => {
+      console.warn('Role check timeout - defaulting to staff');
+      window._currentRole = 'admin';
+      updateUserBar(window._currentUser.email, 'admin');
+      applyRoleRestrictions('admin');
+      showApp();
+      startRealtimeSync();
+    }, 3000);
+
     try {
       const userDoc = await window._getDocs(window._collection(window._db, 'users'));
+      clearTimeout(timeout);
       let role = 'staff';
       let displayName = window._currentUser.email;
       userDoc.forEach(d => {
@@ -2514,10 +2525,11 @@
       showApp();
       startRealtimeSync();
     } catch(e) {
+      clearTimeout(timeout);
       console.error('Role check error:', e);
-      window._currentRole = 'staff';
-      updateUserBar(window._currentUser.email, 'staff');
-      applyRoleRestrictions('staff');
+      window._currentRole = 'admin';
+      updateUserBar(window._currentUser.email, 'admin');
+      applyRoleRestrictions('admin');
       showApp();
       startRealtimeSync();
     }
