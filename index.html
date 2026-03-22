@@ -2006,7 +2006,18 @@
 
         <div class="field">
           <label>Category *</label>
-          <select id="itemCategory" onchange="updateItemOptions()">
+          <select id="itemCategory" onchange="
+            var cat = this.value;
+            var s = document.getElementById('itemName');
+            var items = {'Coffee':['Kopi Susu Gula Aren','Hazelnut Latte','Vanila Latte','Salted Caramel Latte'],'Non Coffee':['Matcha','Taro','Chocolate']};
+            if (!cat) {
+              s.innerHTML = '<option value=&quot;&quot;>— Select Category First —</option>';
+              s.disabled = true; s.style.opacity = '0.5';
+            } else {
+              s.innerHTML = '<option value=&quot;&quot;>— Select Item —</option>' + (items[cat]||[]).map(function(i){return '<option value=&quot;'+i+'&quot;>'+i+'</option>';}).join('');
+              s.disabled = false; s.style.opacity = '1';
+            }
+          ">
             <option value="">— Select Category —</option>
             <option value="Coffee">☕ Coffee</option>
             <option value="Non Coffee">🍵 Non Coffee</option>
