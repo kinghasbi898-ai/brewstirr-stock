@@ -1782,19 +1782,24 @@
   // Check role and show app
   async function handleUserLogin(user) {
     window._currentUser = user;
-    let role = 'admin';
+    let role = 'staff';
     let displayName = user.email;
     try {
       const snapshot = await getDocs(collection(db, 'users'));
+      console.log('User UID:', user.uid);
+      console.log('Total users in Firestore:', snapshot.size);
       snapshot.forEach(d => {
+        console.log('Firestore doc ID:', d.id, '| role:', d.data().role);
         if (d.id === user.uid) {
-          role = d.data().role || 'admin';
+          role = d.data().role || 'staff';
           displayName = d.data().name || user.email;
+          console.log('Matched! Role set to:', role);
         }
       });
     } catch(e) {
       console.error('Role fetch error:', e);
     }
+    console.log('Final role:', role);
     window._currentRole = role;
     window._currentDisplayName = displayName;
 
