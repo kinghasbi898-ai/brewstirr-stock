@@ -169,7 +169,7 @@ tbody tr:hover td{background:rgba(0,229,160,0.04)!important}
       <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="staff@brewstirr.com" onkeydown="if(event.key==='Enter')doLogin()"/></div>
       <div class="field"><label>Password</label><input type="password" id="loginPassword" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" onkeydown="if(event.key==='Enter')doLogin()"/></div>
       <div class="login-error" id="loginError"></div>
-      <button class="login-btn" id="loginBtn" onclick="if(typeof doLogin==='function'){doLogin();}else{document.getElementById('loginError').textContent='JS Error: doLogin not found';document.getElementById('loginError').classList.add('show');}">Sign In</button>
+      <button class="login-btn" id="loginBtn" onclick="window.doLogin()">Sign In</button>
     </div>
   </div>
 </div>
@@ -191,7 +191,7 @@ tbody tr:hover td{background:rgba(0,229,160,0.04)!important}
       <div id="userBar" style="display:none" class="user-bar">
         <div class="user-bar-name" id="userBarName"></div>
         <div class="user-bar-role" id="userBarRole"></div>
-        <button class="logout-btn" onclick="doLogout()">LOGOUT</button>
+        <button class="logout-btn" onclick="window.doLogout()">LOGOUT</button>
       </div>
       <div class="status-dot"></div>
     </div>
@@ -211,13 +211,13 @@ tbody tr:hover td{background:rgba(0,229,160,0.04)!important}
         <div class="field">
           <label>Transaction Type</label>
           <div class="type-toggle">
-            <button class="type-btn in active" onclick="setType('in')">&#9650; Stock In</button>
-            <button class="type-btn out" onclick="setType('out')">&#9660; Stock Out</button>
+            <button class="type-btn in active" onclick="window.setType('in')">&#9650; Stock In</button>
+            <button class="type-btn out" onclick="window.setType('out')">&#9660; Stock Out</button>
           </div>
         </div>
         <div class="field">
           <label>Category *</label>
-          <select id="itemCategory" onchange="onCatChange(this.value)">
+          <select id="itemCategory" onchange="window.onCatChange(this.value)">
             <option value="">&#8212; Select Category &#8212;</option>
             <option value="Coffee">&#9749; Coffee</option>
             <option value="Non Coffee">&#127861; Non Coffee</option>
@@ -249,7 +249,7 @@ tbody tr:hover td{background:rgba(0,229,160,0.04)!important}
           </select>
         </div>
         <div class="field"><label>Notes (optional)</label><input type="text" id="itemNotes" placeholder="Supplier, reason, reference..."/></div>
-        <button class="submit-btn" id="submitBtn" onclick="addTransaction()">+ Record Stock In</button>
+        <button class="submit-btn" id="submitBtn" onclick="window.addTransaction()">+ Record Stock In</button>
       </div>
     </div>
 
@@ -262,17 +262,17 @@ tbody tr:hover td{background:rgba(0,229,160,0.04)!important}
         <div class="table-toolbar">
           <div class="panel-icon">&#128203;</div>
           <div class="panel-title">Transaction Log</div>
-          <input class="search-box" id="searchBox" placeholder="Search items..." oninput="renderTable()"/>
-          <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
-          <button class="filter-btn" onclick="setFilter('in',this)">In</button>
-          <button class="filter-btn" onclick="setFilter('out',this)">Out</button>
+          <input class="search-box" id="searchBox" placeholder="Search items..." oninput="window.renderTable()"/>
+          <button class="filter-btn active" onclick="window.setFilter('all',this)">All</button>
+          <button class="filter-btn" onclick="window.setFilter('in',this)">In</button>
+          <button class="filter-btn" onclick="window.setFilter('out',this)">Out</button>
         </div>
         <div class="date-filter-bar">
           <span class="date-filter-label">&#128197; DATE RANGE</span>
-          <input type="date" class="date-input" id="dateFrom" onchange="renderTable()"/>
+          <input type="date" class="date-input" id="dateFrom" onchange="window.renderTable()"/>
           <span style="color:var(--muted);font-size:11px">to</span>
-          <input type="date" class="date-input" id="dateTo" onchange="renderTable()"/>
-          <button class="filter-btn" onclick="clearDateFilter()" style="font-size:10px;padding:6px 10px">Clear</button>
+          <input type="date" class="date-input" id="dateTo" onchange="window.renderTable()"/>
+          <button class="filter-btn" onclick="window.clearDateFilter()" style="font-size:10px;padding:6px 10px">Clear</button>
         </div>
         <div style="overflow-x:auto;max-height:340px;overflow-y:auto">
           <table>
@@ -287,13 +287,13 @@ tbody tr:hover td{background:rgba(0,229,160,0.04)!important}
 </div>
 
 <!-- MODAL -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+<div class="modal-overlay" id="modalOverlay" onclick="window.closeModal(event)">
   <div class="modal" id="modalBox">
-    <div class="modal-header"><div class="modal-title">Transaction Detail</div><button class="modal-close" onclick="closeModalDirect()">&#10005;</button></div>
+    <div class="modal-header"><div class="modal-title">Transaction Detail</div><button class="modal-close" onclick="window.closeModalDirect()">&#10005;</button></div>
     <div class="modal-body" id="modalBody"></div>
     <div class="modal-footer">
-      <button class="modal-del-btn" onclick="modalDelete()">&#128465; Delete</button>
-      <button class="modal-close-btn" onclick="closeModalDirect()">Close</button>
+      <button class="modal-del-btn" onclick="window.modalDelete()">&#128465; Delete</button>
+      <button class="modal-close-btn" onclick="window.closeModalDirect()">Close</button>
     </div>
   </div>
 </div>
@@ -523,7 +523,7 @@ function renderTable(){
   if(!filtered.length){body.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
   body.innerHTML=filtered.map(function(tx){
-    return '<tr onclick="openModal(''+tx._firebaseId+'')">'
+    return '<tr onclick="window.openModal(''+tx._firebaseId+'')">'
       +'<td><div class="item-name">'+esc(tx.name)+'</div><div class="item-cat">'+esc(tx.category)+'</div></td>'
       +'<td><span class="badge '+tx.type+'">'+(tx.type==='in'?'IN':'OUT')+'</span></td>'
       +'<td>'+(tx.keterangan?'<span class="badge" style="background:rgba(255,204,0,0.1);color:var(--warn);border:1px solid rgba(255,204,0,0.2)">'+esc(tx.keterangan)+'</span>':'-')+'</td>'
@@ -531,7 +531,7 @@ function renderTable(){
       +'<td style="font-family:monospace;font-size:11px;color:var(--muted)">'+esc(tx.unit)+'</td>'
       +'<td style="color:var(--muted);font-size:12px">'+esc(tx.notes||'-')+'</td>'
       +'<td class="time-cell">'+fmtTime(tx.time)+'</td>'
-      +'<td><button class="del-btn" onclick="event.stopPropagation();deleteTransaction(''+tx._firebaseId+'')">&#10005;</button></td>'
+      +'<td><button class="del-btn" onclick="event.stopPropagation();window.deleteTransaction(''+tx._firebaseId+'')">&#10005;</button></td>'
       +'</tr>';
   }).join('');
 }
