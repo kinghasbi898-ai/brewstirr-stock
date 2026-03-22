@@ -166,7 +166,7 @@ tbody tr:hover td{background:rgba(0,229,160,0.04)!important}
       <div class="login-sub">Stock Management System</div>
     </div>
     <div class="login-body">
-      <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="staff@brewstirr.com"/></div>
+      <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="staff@brewstirr.com" onkeydown="if(event.key==='Enter')doLogin()"/></div>
       <div class="field"><label>Password</label><input type="password" id="loginPassword" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" onkeydown="if(event.key==='Enter')doLogin()"/></div>
       <div class="login-error" id="loginError"></div>
       <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In</button>
@@ -560,17 +560,31 @@ tbody tr:hover td{background:rgba(0,229,160,0.04)!important}
     var password = document.getElementById('loginPassword').value;
     var btn = document.getElementById('loginBtn');
     var err = document.getElementById('loginError');
-    if (!email||!password) { err.textContent='Please enter email and password'; err.classList.add('show'); return; }
+
+    // Check firebase loaded
+    if (typeof firebase === 'undefined' || !auth) {
+      err.textContent='Firebase not loaded. Please refresh.';
+      err.style.background='rgba(255,68,102,0.1)'; err.style.borderColor='rgba(255,68,102,0.3)'; err.style.color='var(--danger)';
+      err.classList.add('show'); return;
+    }
+
+    if (!email||!password) {
+      err.textContent='Please enter email and password';
+      err.style.background='rgba(255,68,102,0.1)'; err.style.borderColor='rgba(255,68,102,0.3)'; err.style.color='var(--danger)';
+      err.classList.add('show'); return;
+    }
     btn.disabled=true; btn.textContent='Signing in...';
     err.textContent='Connecting...'; err.classList.add('show');
     err.style.background='rgba(0,229,160,0.1)'; err.style.borderColor='rgba(0,229,160,0.3)'; err.style.color='var(--accent)';
     auth.signInWithEmailAndPassword(email,password).then(function(){
       err.textContent='Success! Loading...';
     }).catch(function(e){
-      var msg='Wrong email or password';
-      if(e.code==='auth/too-many-requests') msg='Too many attempts';
-      if(e.code==='auth/network-request-failed') msg='No internet';
-      err.textContent=msg; err.style.background='rgba(255,68,102,0.1)'; err.style.borderColor='rgba(255,68,102,0.3)'; err.style.color='var(--danger)';
+      var msg='Wrong email or password ('+e.code+')';
+      if(e.code==='auth/too-many-requests') msg='Too many attempts. Try later.';
+      if(e.code==='auth/network-request-failed') msg='No internet connection.';
+      if(e.code==='auth/unauthorized-domain') msg='Domain not authorized in Firebase.';
+      err.textContent=msg;
+      err.style.background='rgba(255,68,102,0.1)'; err.style.borderColor='rgba(255,68,102,0.3)'; err.style.color='var(--danger)';
       btn.disabled=false; btn.textContent='Sign In';
     });
   }
