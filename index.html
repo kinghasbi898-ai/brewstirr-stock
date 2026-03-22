@@ -2132,7 +2132,7 @@
     'Non Coffee': ['Matcha', 'Taro', 'Chocolate']
   };
 
-  function updateItemOptions() {
+  window.updateItemOptions = function updateItemOptions() {
     const cat = document.getElementById('itemCategory').value;
     const itemSelect = document.getElementById('itemName');
     itemSelect.innerHTML = '';
@@ -2152,7 +2152,7 @@
   }
 
   // TYPE TOGGLE
-  function setType(type) {
+  window.setType = function setType(type) {
     currentType = type;
     document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
     document.querySelector(`.type-btn.${type}`).classList.add('active');
@@ -2170,7 +2170,7 @@
   }
 
   // FILTER
-  function setFilter(f, el) {
+  window.setFilter = function setFilter(f, el) {
     currentFilter = f;
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
     el.classList.add('active');
@@ -2178,7 +2178,7 @@
   }
 
   // ADD TRANSACTION
-  async function addTransaction() {
+  window.addTransaction = async function addTransaction() {
     const name = document.getElementById('itemName').value;
     const qty = parseInt(document.getElementById('itemQty').value) || 0;
     const cat = document.getElementById('itemCategory').value;
@@ -2261,7 +2261,7 @@
   }
 
   // DELETE
-  async function deleteTransaction(id) {
+  window.deleteTransaction = async function deleteTransaction(id) {
     try {
       if (!window._firebaseReady) return;
       await window._deleteDoc(window._doc(window._db, 'transactions', id));
@@ -2286,7 +2286,7 @@
   }
 
   // RENDER TABLE
-  function renderTable() {
+  window.renderTable = function renderTable() {
     const body = document.getElementById('transactionBody');
     const search = document.getElementById('searchBox').value.toLowerCase();
     const dateFrom = document.getElementById('dateFrom').value;
@@ -2331,7 +2331,7 @@
     `).join('');
   }
 
-  function clearDateFilter() {
+  window.clearDateFilter = function clearDateFilter() {
     document.getElementById('dateFrom').value = '';
     document.getElementById('dateTo').value = '';
     renderTable();
@@ -2453,7 +2453,7 @@
   // MODAL
   let currentModalTx = null;
 
-  function openModalById(txid) {
+  window.openModalById = function openModalById(txid) {
     const tx = transactions.find(t => (t._firebaseId || t.id || '') == txid);
     if (!tx) { showToast('Could not load transaction', true); return; }
     currentModalTx = tx;
@@ -2525,17 +2525,17 @@
     document.body.style.overflow = 'hidden';
   }
 
-  function closeModal(e) {
+  window.closeModal = function closeModal(e) {
     if (e.target === document.getElementById('modalOverlay')) closeModalDirect();
   }
 
-  function closeModalDirect() {
+  window.closeModalDirect = function closeModalDirect() {
     document.getElementById('modalOverlay').classList.remove('show');
     document.body.style.overflow = '';
     currentModalTx = null;
   }
 
-  async function modalDelete() {
+  window.modalDelete = async function modalDelete() {
     if (!currentModalTx) return;
     const id = currentModalTx._firebaseId;
     closeModalDirect();
@@ -2556,6 +2556,14 @@
     const mainLogo = document.querySelector('header img');
     const loginLogo = document.getElementById('loginLogo');
     if (mainLogo && loginLogo) loginLogo.src = mainLogo.src;
+
+    // Attach category change listener directly
+    const catSelect = document.getElementById('itemCategory');
+    if (catSelect) {
+      catSelect.addEventListener('change', function() {
+        window.updateItemOptions();
+      });
+    }
   });
 
   // Show login screen
@@ -2733,7 +2741,7 @@
   }
 
   // CLEAR DATE FILTER
-  function clearDateFilter() {
+  window.clearDateFilter = function clearDateFilter() {
     document.getElementById('dateFrom').value = '';
     document.getElementById('dateTo').value = '';
     renderTable();
