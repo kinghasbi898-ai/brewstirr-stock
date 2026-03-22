@@ -535,6 +535,10 @@ function renderTable(){
       +'<td><button class="del-btn" onclick="event.stopPropagation();window.deleteTransaction(\''+tx._firebaseId+'\')">&#10005;</button></td>'
       +'</tr>';
   }).join('');
+  // Hide delete buttons for staff
+  if(window._currentRole==='staff'){
+    document.querySelectorAll('.del-btn').forEach(function(btn){btn.style.display='none';});
+  }
 }
 
 function renderStockLevels(){
@@ -623,11 +627,14 @@ auth.onAuthStateChanged(function(user){
     var re=document.getElementById('userBarRole');if(re){re.textContent=role.toUpperCase();re.className='user-bar-role '+role;}
     window._currentRole=role;
     if(role==='staff'){
+      // Staff can see everything but hide delete buttons
       setTimeout(function(){
-        var sp=document.getElementById('stockPanelTop');
-        var tp=document.querySelector('.table-panel');
-        if(sp){sp.style.position='relative';var lvl=sp.querySelector('#stockLevels');if(lvl){lvl.style.filter='blur(4px)';lvl.style.pointerEvents='none';}var m=document.createElement('div');m.className='restricted-msg';m.innerHTML='<div class="restricted-badge">ADMIN ONLY</div>';sp.appendChild(m);}
-        if(tp){tp.style.position='relative';var m2=document.createElement('div');m2.style.cssText='position:absolute;inset:0;background:rgba(13,15,20,0.85);border-radius:16px;display:flex;align-items:center;justify-content:center;z-index:10';m2.innerHTML='<div class="restricted-badge">ADMIN ONLY</div>';tp.appendChild(m2);}
+        document.querySelectorAll('.del-btn').forEach(function(btn){
+          btn.style.display='none';
+        });
+        // Also hide delete button inside modal
+        var modalDel=document.getElementById('modalDelBtn');
+        if(modalDel) modalDel.style.display='none';
       },500);
     }
     db.collection('transactions').orderBy('time','desc').onSnapshot(function(snap){
