@@ -1786,20 +1786,27 @@
     let displayName = user.email;
     try {
       const snapshot = await getDocs(collection(db, 'users'));
-      console.log('User UID:', user.uid);
-      console.log('Total users in Firestore:', snapshot.size);
+      let matched = false;
       snapshot.forEach(d => {
-        console.log('Firestore doc ID:', d.id, '| role:', d.data().role);
-        if (d.id === user.uid) {
-          role = d.data().role || 'staff';
-          displayName = d.data().name || user.email;
-          console.log('Matched! Role set to:', role);
+        const data = d.data();
+        // Match by document ID OR by uid field
+        if (d.id === user.uid || data.uid === user.uid || data.email === user.email) {
+          role = data.role || 'staff';
+          displayName = data.name || user.email;
+          matched = true;
         }
       });
+      // Show debug on screen temporarily
+      const errEl = document.getElementById('loginError');
+      if (!matched && errEl) {
+        errEl.textContent = 'UID: ' + user.uid;
+        errEl.style.background = 'rgba(255,204,0,0.1)';
+        errEl.style.color = 'orange';
+        errEl.classList.add('show');
+      }
     } catch(e) {
       console.error('Role fetch error:', e);
     }
-    console.log('Final role:', role);
     window._currentRole = role;
     window._currentDisplayName = displayName;
 
